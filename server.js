@@ -1,18 +1,26 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
+const axios = require("axios");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
 const { spawn } = require("child_process");
 
 const app = express();
-// Avoid conflicting with MCP port if process.env.PORT is 8080
-const PORT = process.env.CHAT_PORT || (process.env.PORT && process.env.PORT !== "8080" ? process.env.PORT : 3000);
-const HOST = "0.0.0.0";
+
+// Simplified, bulletproof PORT calculation (avoid 8080 collision with MCP)
+let rawPort = parseInt(process.env.CHAT_PORT || process.env.PORT || "3000", 10);
+if (isNaN(rawPort) || rawPort === 8080) {
+  console.warn("[GrapeRoot] Port 8080 is reserved for GrapeRoot MCP. Using 3000.");
+  rawPort = 3000;
+}
+const PORT = rawPort;
+const HOST = process.env.HOST || "0.0.0.0";
 const SESSIONS_FILE = path.join(__dirname, "sessions.json");
 
-// Helper to resolve .dual-graph directory
+// Helper to resolve .dual-graph directory cross-platform
 function getDualGraphDir() {
   const localDir = path.join(process.cwd(), ".dual-graph");
   if (fs.existsSync(localDir)) return localDir;
@@ -21,7 +29,7 @@ function getDualGraphDir() {
   return localDir;
 }
 
-// Read MCP Port dynamically
+// Read MCP Port dynamically from mcp_port file
 function getMcpPort() {
   const dgDir = getDualGraphDir();
   const portFile = path.join(dgDir, "mcp_port");
@@ -34,10 +42,24 @@ function getMcpPort() {
   return 8080;
 }
 
-// Locate agy executable
+// Locate agy executable across Windows, macOS, and Linux
 function findAgyBin() {
-  const localAgy = path.join(process.env.USERPROFILE || os.homedir(), "AppData\\Local\\agy\\bin\\agy.exe");
-  if (fs.existsSync(localAgy)) return localAgy;
+  const isWin = process.platform === "win32";
+  const candidates = isWin
+    ? [
+        path.join(process.env.USERPROFILE || os.homedir(), "AppData", "Local", "agy", "bin", "agy.exe"),
+        path.join(process.env.LOCALAPPDATA || "", "agy", "bin", "agy.exe")
+      ]
+    : [
+        path.join(os.homedir(), ".local", "bin", "agy"),
+        "/usr/local/bin/agy",
+        "/usr/bin/agy",
+        "/opt/homebrew/bin/agy"
+      ];
+
+  for (const c of candidates) {
+    if (c && fs.existsSync(c)) return c;
+  }
   return "agy";
 }
 const AGY_BIN = findAgyBin();
@@ -56,35 +78,29 @@ function getLanIp() {
 }
 const LAN_IP = getLanIp();
 
-// Middleware
+// Security Headers (CSP disabled to allow CDN script delivery)
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({ origin: "*" }));
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(express.static(__dirname));
 
-// Serve index.html on GET /
+// Serve index.html on root GET
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
 /**
- * Universal MCP call helper for GrapeRoot FastMCP server
+ * Universal MCP call helper for GrapeRoot FastMCP server using axios
  */
 async function callMCP(tool, args = {}, timeoutMs = 8000) {
   const mcpPort = getMcpPort();
   const url = `http://127.0.0.1:${mcpPort}/mcp`;
 
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json, text/event-stream"
-      },
-      body: JSON.stringify({
+    const response = await axios.post(
+      url,
+      {
         jsonrpc: "2.0",
         method: "tools/call",
         params: {
@@ -92,28 +108,30 @@ async function callMCP(tool, args = {}, timeoutMs = 8000) {
           arguments: args
         },
         id: Date.now()
-      }),
-      signal: controller.signal
-    });
-
-    clearTimeout(timer);
-
-    if (res.ok) {
-      const data = await res.json();
-      if (data.result) {
-        if (data.result.structuredContent) return data.result.structuredContent;
-        if (data.result.content && Array.isArray(data.result.content) && data.result.content[0]?.text) {
-          try {
-            return JSON.parse(data.result.content[0].text);
-          } catch (e) {
-            return data.result.content[0].text;
-          }
+      },
+      {
+        timeout: timeoutMs,
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream"
         }
-        return data.result;
       }
+    );
+
+    const data = response.data;
+    if (data && data.result) {
+      if (data.result.structuredContent) return data.result.structuredContent;
+      if (data.result.content && Array.isArray(data.result.content) && data.result.content[0]?.text) {
+        try {
+          return JSON.parse(data.result.content[0].text);
+        } catch (e) {
+          return data.result.content[0].text;
+        }
+      }
+      return data.result;
     }
   } catch (err) {
-    // GrapeRoot MCP not responding or timed out
+    console.debug(`[MCP Error: ${tool}]`, err.message);
   }
   return null;
 }
@@ -135,6 +153,28 @@ function logToolCall(toolName, payload) {
 }
 
 /**
+ * Helper to read and auto-repair sessions.json
+ */
+function readSessionsSafe() {
+  if (!fs.existsSync(SESSIONS_FILE)) {
+    try { fs.writeFileSync(SESSIONS_FILE, "[]", "utf8"); } catch (e) {}
+    return [];
+  }
+  try {
+    const raw = fs.readFileSync(SESSIONS_FILE, "utf8");
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.warn("[Sessions] Corrupted sessions.json detected. Backing up and resetting.", err.message);
+    try {
+      fs.copyFileSync(SESSIONS_FILE, SESSIONS_FILE + ".bak");
+      fs.writeFileSync(SESSIONS_FILE, "[]", "utf8");
+    } catch (e) {}
+    return [];
+  }
+}
+
+/**
  * GET /api/status
  */
 app.get("/api/status", async (req, res) => {
@@ -143,25 +183,26 @@ app.get("/api/status", async (req, res) => {
   let mcpConnected = false;
 
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 1200);
-    const r = await fetch(`http://127.0.0.1:${mcpPort}/mcp`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json, text/event-stream"
-      },
-      body: JSON.stringify({
+    const r = await axios.post(
+      `http://127.0.0.1:${mcpPort}/mcp`,
+      {
         jsonrpc: "2.0",
         method: "tools/list",
         params: {},
         id: 1
-      }),
-      signal: controller.signal
-    });
-    clearTimeout(timer);
-    mcpConnected = r.ok;
-  } catch (e) {}
+      },
+      {
+        timeout: 1500,
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream"
+        }
+      }
+    );
+    mcpConnected = (r.status >= 200 && r.status < 300);
+  } catch (e) {
+    mcpConnected = false;
+  }
 
   let graph = {
     nodes: 48067,
@@ -198,7 +239,6 @@ app.get("/api/status", async (req, res) => {
 
 /**
  * GET /api/graph/nodes
- * Return sampled nodes from info_graph.json
  */
 app.get("/api/graph/nodes", (req, res) => {
   const kind = req.query.kind || "all";
@@ -224,7 +264,6 @@ app.get("/api/graph/nodes", (req, res) => {
 
 /**
  * POST /api/graph/search
- * Calls graph_retrieve via MCP
  */
 app.post("/api/graph/search", async (req, res) => {
   const { query, top_files = 10, top_edges = 20 } = req.body;
@@ -237,7 +276,6 @@ app.post("/api/graph/search", async (req, res) => {
 
 /**
  * POST /api/graph/read
- * Calls graph_read via MCP
  */
 app.post("/api/graph/read", async (req, res) => {
   const { file } = req.body;
@@ -250,7 +288,6 @@ app.post("/api/graph/read", async (req, res) => {
 
 /**
  * GET /api/memory
- * Read context-store.json
  */
 app.get("/api/memory", (req, res) => {
   const dgDir = getDualGraphDir();
@@ -266,7 +303,6 @@ app.get("/api/memory", (req, res) => {
 
 /**
  * POST /api/memory
- * Add memory via graph_add_memory
  */
 app.post("/api/memory", async (req, res) => {
   const { type = "fact", content, tags = [], files = [] } = req.body;
@@ -275,7 +311,6 @@ app.post("/api/memory", async (req, res) => {
   const result = await callMCP("graph_add_memory", { type, content, tags, files });
   logToolCall("graph_add_memory", { type, content, tags, files, result });
 
-  // Read updated store
   const dgDir = getDualGraphDir();
   const memFile = path.join(dgDir, "context-store.json");
   let list = [];
@@ -287,7 +322,6 @@ app.post("/api/memory", async (req, res) => {
 
 /**
  * GET /api/tool-calls
- * Read mcp_tool_calls.jsonl and return last 50
  */
 app.get("/api/tool-calls", (req, res) => {
   const dgDir = getDualGraphDir();
@@ -307,7 +341,6 @@ app.get("/api/tool-calls", (req, res) => {
 
 /**
  * POST /mcp-tool
- * Direct tool invocation helper
  */
 app.post("/mcp-tool", async (req, res) => {
   const { tool, args = {} } = req.body;
@@ -320,11 +353,16 @@ app.post("/mcp-tool", async (req, res) => {
 
 /**
  * POST /bash
- * Shell command execution streaming SSE
+ * WARNING: This endpoint executes arbitrary shell commands. For local use only.
  */
 app.post("/bash", (req, res) => {
   const { command } = req.body;
-  if (!command) return res.status(400).json({ error: "Command required" });
+  if (!command || typeof command !== "string") {
+    return res.status(400).json({ error: "Command required" });
+  }
+  if (command.length > 2000) {
+    return res.status(400).json({ error: "Command too long (max 2000 characters)" });
+  }
 
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
@@ -358,51 +396,50 @@ app.post("/bash", (req, res) => {
 
 /**
  * POST /api/log
- * Forward token usage to GrapeRoot MCP log endpoint
  */
 app.post("/api/log", async (req, res) => {
   const mcpPort = getMcpPort();
   try {
-    const r = await fetch(`http://127.0.0.1:${mcpPort}/log`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(req.body)
+    const r = await axios.post(`http://127.0.0.1:${mcpPort}/log`, req.body, {
+      timeout: 3000,
+      headers: { "Content-Type": "application/json" }
     });
-    res.json({ ok: r.ok });
+    res.json({ ok: r.status >= 200 && r.status < 300 });
   } catch (e) {
     res.json({ ok: false, error: e.message });
   }
 });
 
 /**
- * GET /api/sessions & POST /api/sessions
+ * GET /api/sessions
  */
 app.get("/api/sessions", (req, res) => {
-  if (fs.existsSync(SESSIONS_FILE)) {
-    try {
-      const data = JSON.parse(fs.readFileSync(SESSIONS_FILE, "utf8"));
-      return res.json(Array.isArray(data) ? data : []);
-    } catch (e) {}
-  }
-  res.json([]);
+  const sessions = readSessionsSafe();
+  res.json(sessions);
 });
 
+/**
+ * POST /api/sessions
+ */
 app.post("/api/sessions", (req, res) => {
   const session = req.body;
   if (!session || !session.id) return res.status(400).json({ error: "Invalid session object" });
 
   try {
-    let sessions = [];
-    if (fs.existsSync(SESSIONS_FILE)) {
-      try { sessions = JSON.parse(fs.readFileSync(SESSIONS_FILE, "utf8")); } catch (e) {}
-    }
-    if (!Array.isArray(sessions)) sessions = [];
+    let sessions = readSessionsSafe();
+    const truncatedTitle = String(session.title || "Session").slice(0, 60);
 
     const idx = sessions.findIndex(s => s.id === session.id);
+    const sessionObj = {
+      ...session,
+      title: truncatedTitle,
+      updatedAt: new Date().toISOString()
+    };
+
     if (idx >= 0) {
-      sessions[idx] = { ...sessions[idx], ...session, updatedAt: new Date().toISOString() };
+      sessions[idx] = { ...sessions[idx], ...sessionObj };
     } else {
-      sessions.unshift({ ...session, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      sessions.unshift({ ...sessionObj, createdAt: new Date().toISOString() });
     }
 
     if (sessions.length > 50) sessions = sessions.slice(0, 50);
@@ -423,6 +460,11 @@ app.post("/chat", async (req, res) => {
 
   if (!message) {
     return res.status(400).json({ error: "Message is required" });
+  }
+
+  // Validate sessionId if provided
+  if (sessionId && (typeof sessionId !== "string" || !/^[a-zA-Z0-9_-]{1,64}$/.test(sessionId))) {
+    return res.status(400).json({ error: "Invalid sessionId" });
   }
 
   // Set SSE Headers
@@ -494,12 +536,12 @@ app.post("/chat", async (req, res) => {
       }
     }
 
-    // 3. Build Prompt with Context
+    // 3. Build Prompt with Context BEFORE the user message
     let contextHeader = `[GrapeRoot Dual-Graph Context | Confidence: ${confidence}]\n`;
     if (codeSnippets.length > 0) {
       contextHeader += codeSnippets.join("\n\n") + "\n\n";
     }
-    const fullPrompt = `${message}\n\n${contextHeader}`;
+    const fullPrompt = `${contextHeader}\n\n${message}`;
 
     // 4. Spawn Google Antigravity CLI
     const agyArgs = [
@@ -600,6 +642,28 @@ app.post("/chat", async (req, res) => {
     res.write("data: [DONE]\n\n");
     res.end();
   }
+});
+
+// 404 Handler
+app.use((req, res) => {
+  res.status(404).json({ error: "Endpoint not found" });
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error("[Server Error]", err.message);
+  res.status(500).json({ error: "Internal server error" });
+});
+
+// Graceful Process Termination Handlers
+process.on("SIGINT", () => {
+  console.log("\n[GrapeRoot] Shutting down gracefully...");
+  process.exit(0);
+});
+
+process.on("SIGTERM", () => {
+  console.log("\n[GrapeRoot] Terminating server...");
+  process.exit(0);
 });
 
 // Start Express Server

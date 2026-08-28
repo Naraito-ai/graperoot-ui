@@ -1,5 +1,17 @@
 [
   {
+    "id": "test-sess",
+    "title": "Audit Test Session with a very long title that exceeds sixty",
+    "updatedAt": "2026-08-28T19:34:06.100Z",
+    "createdAt": "2026-08-28T19:34:06.100Z"
+  },
+  {
+    "id": "session_1787944871064",
+    "title": "hey build a siuu button app on my pc",
+    "createdAt": "2026-08-28T19:21:13.444Z",
+    "updatedAt": "2026-08-28T19:23:32.451Z"
+  },
+  {
     "id": "session_1787944698041",
     "title": "hi",
     "createdAt": "2026-08-28T19:18:18.045Z",

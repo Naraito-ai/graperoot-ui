@@ -8,6 +8,8 @@
   
   <!-- Marked.js for Markdown -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- DOMPurify for XSS Sanitization -->
+  <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
   <!-- Highlight.js for Syntax Highlighting -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -143,8 +145,10 @@
       cursor: pointer;
       display: flex;
       align-items: center;
+      transition: all 0.15s;
     }
     .sidebar-btn:hover { background: var(--surface-2); color: var(--text); }
+    .sidebar-btn.active { border-color: var(--emerald); color: var(--emerald); }
 
     /* App Body */
     .app-body {
@@ -449,6 +453,13 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
+      position: relative;
+    }
+
+    .chat-ai-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
     .chat-ai-header {
@@ -471,7 +482,23 @@
       justify-content: center;
       font-size: 11px;
       color: var(--emerald);
+      font-weight: bold;
     }
+
+    .chat-copy-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 10.5px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+    .chat-copy-btn:hover { background: var(--surface-2); color: var(--text); }
 
     .chat-ai-text {
       font-size: 13.5px;
@@ -581,6 +608,28 @@
       display: none;
     }
 
+    /* Loading Spinner */
+    .spinner-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 24px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .css-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--emerald);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     /* TAB 3: STATS */
     .stats-pane {
       padding: 16px;
@@ -644,6 +693,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
     .mem-filter-tabs {
@@ -671,6 +721,45 @@
       font-size: 11.5px;
       font-weight: 600;
       cursor: pointer;
+    }
+
+    /* Add Memory Inline Form/Modal */
+    .add-memory-card {
+      background: #111722;
+      border: 1px solid var(--emerald);
+      border-radius: 8px;
+      padding: 12px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .mem-input-text {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      outline: none;
+      font-family: var(--font-ui);
+    }
+    .mem-input-text:focus { border-color: var(--emerald); }
+
+    .mem-form-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mem-select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      outline: none;
     }
 
     .memory-card {
@@ -717,16 +806,22 @@
       background: transparent;
       border: none;
       color: var(--muted);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 2px;
+      gap: 3px;
       cursor: pointer;
     }
     .mob-tab-btn.active { color: var(--emerald); border-top: 2px solid var(--emerald); }
+
+    .mob-tab-svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
 
     @media (max-width: 768px) {
       .header-center { display: none; }
@@ -744,7 +839,7 @@
   <!-- Top Header Bar -->
   <header class="top-header">
     <div class="header-left">
-      <button class="sidebar-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
+      <button class="sidebar-btn" id="sidebarToggleBtn" onclick="toggleSidebar()" aria-label="Toggle Navigation Sidebar" title="Toggle Sidebar">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
       </button>
       <div class="brand-logo" onclick="startNewSession()">
@@ -773,14 +868,14 @@
       <div class="sidebar-header">
         <button class="new-session-btn" onclick="startNewSession()">
           <span>+ New Session</span>
-          <span style="font-size:10px;opacity:0.6;">Ctrl+K</span>
+          <span style="font-size:10px;opacity:0.6;" id="sessionShortcutBadge">Ctrl+K</span>
         </button>
       </div>
 
       <div class="session-list" id="sessionList"></div>
 
       <div class="sidebar-footer">
-        <div style="color:var(--text);font-weight:600;" id="userBadge">saivarshithuduthalaboina@gmail.com</div>
+        <div style="color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="userBadge">Google Antigravity Session</div>
         <div style="font-family:var(--font-mono);font-size:10px;opacity:0.7;" id="versionBadge">Antigravity CLI 1.1.21</div>
         <div style="font-family:var(--font-mono);font-size:10px;color:var(--cyan);" id="lanIpBadge">LAN: 10.114.175.98:3000</div>
       </div>
@@ -835,7 +930,7 @@
             <div class="code-viewer-drawer" id="codeViewer">
               <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
                 <span id="codeViewerTitle" style="color:var(--cyan);font-weight:600;"></span>
-                <button onclick="document.getElementById('codeViewer').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;">✕</button>
+                <button onclick="document.getElementById('codeViewer').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;" title="Close code viewer (Esc)">✕</button>
               </div>
               <pre><code id="codeViewerContent"></code></pre>
             </div>
@@ -884,7 +979,24 @@
                 <button class="mem-filter-btn" onclick="filterMemory('fact', this)">Fact</button>
                 <button class="mem-filter-btn" onclick="filterMemory('blocker', this)">Blocker</button>
               </div>
-              <button class="btn-add-mem" onclick="promptAddMemory()">+ Add Memory</button>
+              <button class="btn-add-mem" onclick="toggleAddMemoryForm()">+ Add Memory</button>
+            </div>
+
+            <!-- Inline Add Memory Form -->
+            <div class="add-memory-card" id="addMemoryForm">
+              <span style="font-size:12px;font-weight:600;color:var(--emerald);">Add Entry to Context Store</span>
+              <input type="text" class="mem-input-text" id="memContentInput" placeholder="Fact, decision, or blocker (one sentence, max 15 words)...">
+              <div class="mem-form-row">
+                <select class="mem-select" id="memTypeSelect">
+                  <option value="fact">Fact</option>
+                  <option value="decision">Decision</option>
+                  <option value="task">Task</option>
+                  <option value="next">Next Step</option>
+                  <option value="blocker">Blocker</option>
+                </select>
+                <button class="btn-add-mem" onclick="submitAddMemory()">Save</button>
+                <button class="btn-search" style="color:var(--muted);" onclick="toggleAddMemoryForm()">Cancel</button>
+              </div>
             </div>
 
             <div id="memoryList" style="display:flex;flex-direction:column;gap:8px;"></div>
@@ -894,12 +1006,24 @@
     </div>
   </div>
 
-  <!-- Mobile Bottom Tab Bar -->
+  <!-- Mobile Bottom Tab Bar with Inline SVGs -->
   <nav class="mobile-tab-bar">
-    <button class="mob-tab-btn active" id="mTabTerm" onclick="switchMobileView('terminal')">⌨ Terminal</button>
-    <button class="mob-tab-btn" id="mTabChat" onclick="switchMobileView('chat')">💬 Chat</button>
-    <button class="mob-tab-btn" id="mTabGraph" onclick="switchMobileView('graph')">🔍 Graph</button>
-    <button class="mob-tab-btn" id="mTabMem" onclick="switchMobileView('memory')">🧠 Memory</button>
+    <button class="mob-tab-btn active" id="mTabTerm" onclick="switchMobileView('terminal')">
+      <svg class="mob-tab-svg" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v10zm-2-1h-6v-2h6v2zm-8.29-4.71L6.71 11.3 9.41 14l-2.7 2.7 1.41 1.41 4.12-4.11-4.13-4.11z"/></svg>
+      <span>Terminal</span>
+    </button>
+    <button class="mob-tab-btn" id="mTabChat" onclick="switchMobileView('chat')">
+      <svg class="mob-tab-svg" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/></svg>
+      <span>Chat</span>
+    </button>
+    <button class="mob-tab-btn" id="mTabGraph" onclick="switchMobileView('graph')">
+      <svg class="mob-tab-svg" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      <span>Graph</span>
+    </button>
+    <button class="mob-tab-btn" id="mTabMem" onclick="switchMobileView('memory')">
+      <svg class="mob-tab-svg" viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.8 12.16 7 10.63 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"/></svg>
+      <span>Memory</span>
+    </button>
   </nav>
 
 <script>
@@ -910,6 +1034,8 @@
   let isGenerating = false;
   let currentModel = 'gemini-3.7-flash';
   let memoryData = [];
+  let statusFailures = 0;
+  let statusIntervalId = null;
 
   const terminalOutput = document.getElementById('terminalOutput');
   const termInput = document.getElementById('termInput');
@@ -917,26 +1043,60 @@
   const sessionList = document.getElementById('sessionList');
   const sidebar = document.getElementById('sidebar');
 
-  // Exact GrapeRoot Diamond ASCII Banner
-  const DIAMOND_BANNER = 
-`    ▄▀▀▄        Antigravity CLI 1.1.21
-   ▀▀▀▀▀▀       saivarshithuduthalaboina@gmail.com (Google AI Pro)
-  ▀▀▀▀▀▀▀▀      Gemini 3.7 Flash (High)
- ▄▀▀    ▀▀▄     D:\\
-▄▀▀      ▀▀▄    GrapeRoot Dual-Graph Engine Active\n`;
+  // Configure marked.js with GFM & breaks
+  if (window.marked) {
+    marked.setOptions({ breaks: true, gfm: true });
+  }
 
-  window.addEventListener('DOMContentLoaded', () => {
-    printDiamondBanner();
+  // Model selection map
+  const MODELS = {
+    flash: { id: 'gemini-3.7-flash', label: 'Gemini 3.7 Flash (High)' },
+    '3.7-flash': { id: 'gemini-3.7-flash', label: 'Gemini 3.7 Flash (High)' },
+    '3.5-flash': { id: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash' },
+    pro: { id: 'gemini-3.7-pro', label: 'Gemini 3.7 Pro (High)' },
+    '3.7-pro': { id: 'gemini-3.7-pro', label: 'Gemini 3.7 Pro (High)' },
+    claude: { id: 'claude-sonnet', label: 'Claude Sonnet' },
+    sonnet: { id: 'claude-sonnet', label: 'Claude Sonnet' },
+    codex: { id: 'codex', label: 'OpenAI Codex' },
+    'gpt-oss': { id: 'gpt-oss-120b', label: 'GPT-OSS-120B' }
+  };
+
+  // Build Dynamic Diamond Banner
+  function buildDiamondBanner(user, drive, version, model) {
+    return `    ▄▀▀▄        ${version || 'Antigravity CLI 1.1.21'}
+   ▀▀▀▀▀▀       ${user || 'saivarshithuduthalaboina@gmail.com (Google AI Pro)'}
+  ▀▀▀▀▀▀▀▀      ${model || 'Gemini 3.7 Flash (High)'}
+ ▄▀▀    ▀▀▄     ${drive || 'D:\\'}
+▄▀▀      ▀▀▄    GrapeRoot Dual-Graph Engine Active\n`;
+  }
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    // Restore command history from localStorage
+    try {
+      commandHistory = JSON.parse(localStorage.getItem('graperoot_history') || '[]');
+      historyIndex = commandHistory.length;
+    } catch (e) {
+      commandHistory = [];
+    }
+
+    // Platform detection for Mac/Windows shortcut label
+    const isMac = (navigator.platform || navigator.userAgent || '').toUpperCase().includes('MAC');
+    const shortcutEl = document.getElementById('sessionShortcutBadge');
+    if (shortcutEl) shortcutEl.textContent = isMac ? '⌘K' : 'Ctrl+K';
+
+    // Initialize Dynamic Banner
+    await initBanner();
+
     loadSessions();
-    fetchStatus();
     loadGraphNodes();
     loadMemory();
     loadToolCalls();
 
-    setInterval(fetchStatus, 10000);
+    // Start status polling with backoff support
+    setupStatusPolling(10000);
     setInterval(loadToolCalls, 10000);
 
-    // Keyboard Shortcuts
+    // Global Keydown Listeners
     window.addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
@@ -946,6 +1106,12 @@
         e.preventDefault();
         toggleAllToolBlocks();
       }
+      if (e.key === 'Escape') {
+        const drawer = document.getElementById('codeViewer');
+        if (drawer) drawer.style.display = 'none';
+        const addMem = document.getElementById('addMemoryForm');
+        if (addMem) addMem.style.display = 'none';
+      }
     });
 
     // Terminal Input Handling
@@ -954,6 +1120,9 @@
         const val = termInput.value.trim();
         if (val) {
           commandHistory.push(val);
+          try {
+            localStorage.setItem('graperoot_history', JSON.stringify(commandHistory.slice(-100)));
+          } catch (err) {}
           historyIndex = commandHistory.length;
           termInput.value = '';
           handleCommand(val);
@@ -987,10 +1156,26 @@
     }
   });
 
-  function printDiamondBanner() {
+  async function initBanner() {
+    try {
+      const res = await fetch('/api/status');
+      const d = await res.json();
+      printDiamondBanner(d);
+      updateStatusUI(d);
+    } catch (e) {
+      printDiamondBanner(null);
+    }
+  }
+
+  function printDiamondBanner(d) {
+    terminalOutput.innerHTML = '';
+    const bannerText = d 
+      ? buildDiamondBanner(d.user, d.activeDrive, d.version, d.model)
+      : buildDiamondBanner('Google Antigravity Session', 'D:\\', 'Antigravity CLI 1.1.21', 'Gemini 3.7 Flash (High)');
+    
     const div = document.createElement('div');
     div.className = 'ascii-diamond';
-    div.textContent = DIAMOND_BANNER;
+    div.textContent = bannerText;
     terminalOutput.appendChild(div);
     printTermLine('Ready. Type a prompt or /help for all GrapeRoot commands.\n', '#8b949e');
   }
@@ -1004,8 +1189,16 @@
   }
 
   function toggleSidebar() {
-    sidebar.classList.toggle('open');
-    sidebar.classList.toggle('collapsed');
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      sidebar.classList.toggle('open');
+    } else {
+      sidebar.classList.toggle('collapsed');
+    }
+    const btn = document.getElementById('sidebarToggleBtn');
+    if (btn) {
+      btn.classList.toggle('active', isMobile ? sidebar.classList.contains('open') : !sidebar.classList.contains('collapsed'));
+    }
   }
 
   function switchExplorerTab(tabName, btn) {
@@ -1028,39 +1221,72 @@
     if (view === 'terminal') {
       termPanel.classList.add('mobile-active');
       expPanel.classList.remove('mobile-active');
-      document.getElementById('mTabTerm').classList.add('active');
+      const btn = document.getElementById('mTabTerm');
+      if (btn) btn.classList.add('active');
     } else {
       termPanel.classList.remove('mobile-active');
       expPanel.classList.add('mobile-active');
+      const tabs = document.querySelectorAll('.tab-btn');
+
       if (view === 'chat') {
-        switchExplorerTab('chat', document.querySelectorAll('.tab-btn')[0]);
-        document.getElementById('mTabChat').classList.add('active');
+        if (tabs && tabs[0]) switchExplorerTab('chat', tabs[0]);
+        const btn = document.getElementById('mTabChat');
+        if (btn) btn.classList.add('active');
       } else if (view === 'graph') {
-        switchExplorerTab('graph', document.querySelectorAll('.tab-btn')[1]);
-        document.getElementById('mTabGraph').classList.add('active');
+        if (tabs && tabs[1]) switchExplorerTab('graph', tabs[1]);
+        const btn = document.getElementById('mTabGraph');
+        if (btn) btn.classList.add('active');
       } else if (view === 'memory') {
-        switchExplorerTab('memory', document.querySelectorAll('.tab-btn')[3]);
-        document.getElementById('mTabMem').classList.add('active');
+        if (tabs && tabs[3]) switchExplorerTab('memory', tabs[3]);
+        const btn = document.getElementById('mTabMem');
+        if (btn) btn.classList.add('active');
       }
     }
   }
 
-  async function fetchStatus() {
-    try {
-      const res = await fetch('/api/status');
-      const data = await res.json();
-      if (data.graph) {
-        document.getElementById('statsPillText').textContent = 
-          `${Number(data.graph.nodes).toLocaleString()} Nodes · ${Number(data.graph.edges).toLocaleString()} Edges · ${Number(data.graph.files).toLocaleString()} Files`;
-        document.getElementById('statNodes').textContent = Number(data.graph.nodes).toLocaleString();
-        document.getElementById('statEdges').textContent = Number(data.graph.edges).toLocaleString();
-        document.getElementById('statFiles').textContent = Number(data.graph.files).toLocaleString();
-        document.getElementById('statSymbols').textContent = Number(data.graph.symbols).toLocaleString();
+  function setupStatusPolling(intervalMs) {
+    if (statusIntervalId) clearInterval(statusIntervalId);
+    statusIntervalId = setInterval(async () => {
+      try {
+        const res = await fetch('/api/status');
+        if (res.ok) {
+          const data = await res.json();
+          updateStatusUI(data);
+          if (statusFailures > 0) {
+            statusFailures = 0;
+            setupStatusPolling(10000); // reset to normal
+          }
+        } else {
+          handleStatusFailure();
+        }
+      } catch (e) {
+        handleStatusFailure();
       }
-      document.getElementById('mcpDot').className = 'status-dot' + (data.mcp ? '' : ' offline');
-      if (data.lanIp) document.getElementById('lanIpBadge').textContent = `LAN: http://${data.lanIp}:${data.port || 3000}`;
-      if (data.activeDrive) document.getElementById('activeDriveBadge').textContent = data.activeDrive;
-    } catch (e) {}
+    }, intervalMs);
+  }
+
+  function handleStatusFailure() {
+    statusFailures++;
+    document.getElementById('mcpDot').className = 'status-dot offline';
+    if (statusFailures >= 3) {
+      setupStatusPolling(60000); // back off to 60s
+    }
+  }
+
+  function updateStatusUI(data) {
+    if (data.graph) {
+      document.getElementById('statsPillText').textContent = 
+        `${Number(data.graph.nodes).toLocaleString()} Nodes · ${Number(data.graph.edges).toLocaleString()} Edges · ${Number(data.graph.files).toLocaleString()} Files`;
+      document.getElementById('statNodes').textContent = Number(data.graph.nodes).toLocaleString();
+      document.getElementById('statEdges').textContent = Number(data.graph.edges).toLocaleString();
+      document.getElementById('statFiles').textContent = Number(data.graph.files).toLocaleString();
+      document.getElementById('statSymbols').textContent = Number(data.graph.symbols).toLocaleString();
+    }
+    document.getElementById('mcpDot').className = 'status-dot' + (data.mcp ? '' : ' offline');
+    if (data.lanIp) document.getElementById('lanIpBadge').textContent = `LAN: http://${data.lanIp}:${data.port || 3000}`;
+    if (data.activeDrive) document.getElementById('activeDriveBadge').textContent = data.activeDrive;
+    if (data.user) document.getElementById('userBadge').textContent = data.user;
+    if (data.version) document.getElementById('versionBadge').textContent = data.version;
   }
 
   function toggleAllToolBlocks() {
@@ -1083,7 +1309,7 @@
           break;
         case 'clear':
           terminalOutput.innerHTML = '';
-          printDiamondBanner();
+          initBanner();
           break;
         case 'status':
           showStatusCmd();
@@ -1141,13 +1367,13 @@ GrapeRoot Commands:
   /help            Show this help menu
   /clear           Clear terminal window
   /status          Display Dual-Graph status & network URLs
-  /scan            Trigger graph_scan(project_root: "D:\\")
+  /scan            Trigger graph_scan(project_root: ".")
   /read <file>     Call graph_read for file or symbol (e.g. /read bot.py::on_message)
   /search <query>  Call graph_retrieve for semantic search
   /memory          List context-store.json entries
   /remember <txt>  Add fact to memory (graph_add_memory)
   /bash <cmd>      Execute shell command locally
-  /model <name>    Switch active model (/model pro, /model flash)
+  /model <name>    Switch active model (/model pro, /model flash, /model claude, /model codex)
   /history         Show recent session commands
   /export          Export session as JSON
   /new             Start fresh session
@@ -1183,12 +1409,12 @@ GrapeRoot Dual-Graph Status:
 
   async function runGraphScan() {
     printTermLine('🍇 Running GrapeRoot graph_scan...', '#e3b341');
-    const toolEl = createToolBlock('graph_scan', { project_root: 'D:\\' });
+    const toolEl = createToolBlock('graph_scan', { project_root: '.' });
     try {
       const res = await fetch('/mcp-tool', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tool: 'graph_scan', args: { project_root: 'D:\\' } })
+        body: JSON.stringify({ tool: 'graph_scan', args: { project_root: '.' } })
       });
       const data = await res.json();
       updateToolBlock(toolEl, 'done', JSON.stringify(data.result || data, null, 2));
@@ -1245,7 +1471,7 @@ GrapeRoot Dual-Graph Status:
     const res = await fetch('/api/memory');
     const list = await res.json();
     printTermLine(`🧠 Context Store Memories (${list.length}):\n` + 
-      list.map(m => `  [${m.type.toUpperCase()}] ${m.content} (${m.date || 'today'})`).join('\n'), '#c4b5fd');
+      list.map(m => `  [${(m.type || 'fact').toUpperCase()}] ${m.content} (${m.date || 'today'})`).join('\n'), '#c4b5fd');
   }
 
   async function addMemoryCmd(text) {
@@ -1253,7 +1479,7 @@ GrapeRoot Dual-Graph Status:
       printTermLine('Usage: /remember <fact/task text>', '#f85149');
       return;
     }
-    const res = await fetch('/api/memory', {
+    await fetch('/api/memory', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'fact', content: text })
@@ -1297,14 +1523,19 @@ GrapeRoot Dual-Graph Status:
   }
 
   function switchModelCmd(name) {
-    if (name.includes('pro')) {
-      currentModel = 'gemini-3.7-pro';
-      document.getElementById('activeModelBadge').textContent = 'Gemini 3.7 Pro (High)';
-    } else {
-      currentModel = 'gemini-3.7-flash';
-      document.getElementById('activeModelBadge').textContent = 'Gemini 3.7 Flash (High)';
+    if (!name) {
+      printTermLine(`Active model: ${currentModel}. Use /model <name> to switch.`, '#58a6ff');
+      return;
     }
-    printTermLine(`Active model: ${currentModel}`, '#39d353');
+    const key = name.toLowerCase().trim();
+    const m = MODELS[key];
+    if (!m) {
+      printTermLine(`Unknown model "${name}". Available models: ${Object.keys(MODELS).join(', ')}`, '#f85149');
+      return;
+    }
+    currentModel = m.id;
+    document.getElementById('activeModelBadge').textContent = m.label;
+    printTermLine(`Switched model to ${m.label}`, '#39d353');
   }
 
   function showHistoryCmd() {
@@ -1335,7 +1566,7 @@ GrapeRoot Dual-Graph Status:
     printTermLine('✅ Exported session to JSON!', '#39d353');
   }
 
-  // AI Prompt Execution Flow
+  // AI Prompt Execution Flow with 120s timeout and debounced rendering
   async function sendPromptToAntigravity(promptText) {
     if (isGenerating) return;
     isGenerating = true;
@@ -1344,9 +1575,13 @@ GrapeRoot Dual-Graph Status:
 
     const aiChatEl = appendChatAiPlaceholder();
     let termAiText = '';
+    let renderDebounce = null;
     const aiSpan = document.createElement('div');
     aiSpan.style.color = '#e6edf3';
     terminalOutput.appendChild(aiSpan);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
 
     try {
       const response = await fetch('/chat', {
@@ -1356,7 +1591,8 @@ GrapeRoot Dual-Graph Status:
           message: promptText,
           model: currentModel,
           sessionId: currentSessionId
-        })
+        }),
+        signal: controller.signal
       });
 
       const reader = response.body.getReader();
@@ -1394,19 +1630,28 @@ GrapeRoot Dual-Graph Status:
               } else if (data.type === 'token') {
                 termAiText += data.data.text;
                 aiSpan.textContent = termAiText;
-                updateChatAiContent(aiChatEl, termAiText);
                 terminalOutput.scrollTop = terminalOutput.scrollHeight;
+
+                // Debounced chat rendering for high performance
+                clearTimeout(renderDebounce);
+                renderDebounce = setTimeout(() => {
+                  updateChatAiContent(aiChatEl, termAiText);
+                }, 250);
               }
             } catch (e) {}
           }
         }
       }
     } catch (e) {
-      printTermLine(`⚠️ Error: ${e.message}`, '#f85149');
+      printTermLine(`⚠️ Error: ${e.name === 'AbortError' ? 'Request timed out after 120s' : e.message}`, '#f85149');
     } finally {
+      clearTimeout(timeoutId);
+      clearTimeout(renderDebounce);
+      updateChatAiContent(aiChatEl, termAiText);
       isGenerating = false;
       document.getElementById('termStatusBadge').textContent = 'READY';
       document.getElementById('termStatusBadge').style.color = 'var(--green)';
+      chatMessages.scrollTop = chatMessages.scrollHeight;
       saveSession();
     }
   }
@@ -1416,12 +1661,13 @@ GrapeRoot Dual-Graph Status:
     const block = document.createElement('div');
     block.className = 'tool-block';
     const argsStr = typeof args === 'object' ? JSON.stringify(args) : String(args);
+    const truncatedArgs = argsStr.slice(0, 45);
 
     block.innerHTML = `
       <div class="tool-block-header" onclick="this.parentElement.classList.toggle('expanded')">
         <div>
           <span class="tool-title">● ${escapeHtml(name)}</span>
-          <span style="color:var(--muted);margin-left:6px;">(${escapeHtml(argsStr.slice(0, 45))})</span>
+          <span style="color:var(--muted);margin-left:6px;">(${escapeHtml(truncatedArgs)})</span>
           <span style="font-size:10px;color:var(--muted);margin-left:6px;">(ctrl+o to expand)</span>
         </div>
         <span class="tool-tag running">running</span>
@@ -1474,9 +1720,12 @@ GrapeRoot Dual-Graph Status:
     row.className = 'chat-row assistant';
     row.innerHTML = `
       <div class="chat-ai-box">
-        <div class="chat-ai-header">
-          <div class="chat-ai-avatar">G</div>
-          <span>GrapeRoot Antigravity</span>
+        <div class="chat-ai-top">
+          <div class="chat-ai-header">
+            <div class="chat-ai-avatar">G</div>
+            <span>GrapeRoot Antigravity</span>
+          </div>
+          <button class="chat-copy-btn" onclick="copyChatRaw(this)">Copy</button>
         </div>
         <div class="chat-graph-slot"></div>
         <div class="chat-ai-text">...</div>
@@ -1493,30 +1742,57 @@ GrapeRoot Dual-Graph Status:
     const files = Array.isArray(data.files) ? data.files : [];
     slot.innerHTML = `
       <div class="graph-context-chip">
-        🍇 Dual-Graph: <strong>${data.confidence.toUpperCase()}</strong> confidence · ${files.length} nodes pre-loaded
+        🍇 Dual-Graph: <strong>${escapeHtml(data.confidence?.toUpperCase() || 'HIGH')}</strong> confidence · ${files.length} nodes pre-loaded
       </div>
     `;
   }
 
   function updateChatAiContent(rowEl, markdownText) {
+    if (!rowEl) return;
     const textEl = rowEl.querySelector('.chat-ai-text');
     if (textEl) {
-      textEl.innerHTML = marked.parse(markdownText || '');
-      textEl.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+      rowEl.setAttribute('data-raw-markdown', markdownText || '');
+      if (window.marked && window.DOMPurify) {
+        textEl.innerHTML = DOMPurify.sanitize(marked.parse(markdownText || ''));
+      } else {
+        textEl.textContent = markdownText || '';
+      }
+      textEl.querySelectorAll('pre code').forEach(block => {
+        if (window.hljs) hljs.highlightElement(block);
+      });
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
   }
 
+  window.copyChatRaw = function(btn) {
+    const box = btn.closest('.chat-ai-box');
+    const raw = box ? box.getAttribute('data-raw-markdown') : '';
+    if (raw) {
+      navigator.clipboard.writeText(raw).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 1500);
+      });
+    }
+  };
+
   // Graph Explorer Tab
   async function loadGraphNodes(kind = 'all') {
     const list = document.getElementById('nodeList');
-    list.innerHTML = '<div style="padding:10px;color:var(--muted);font-size:11.5px;">Loading graph nodes...</div>';
+    list.innerHTML = `
+      <div class="spinner-box">
+        <div class="css-spinner"></div>
+        <span>Loading graph nodes from info_graph.json...</span>
+      </div>`;
+
     try {
       const res = await fetch(`/api/graph/nodes?kind=${kind}&limit=40`);
       const data = await res.json();
       renderNodes(data.nodes || []);
     } catch (e) {
-      list.innerHTML = '<div style="color:var(--red);font-size:11.5px;">Error loading nodes</div>';
+      list.innerHTML = `
+        <div style="padding:16px;text-align:center;color:var(--muted);font-size:12px;">
+          GrapeRoot MCP not connected. Run <code style="color:var(--emerald);">graperoot . --antigravity</code> to index your project.
+        </div>`;
     }
   }
 
@@ -1524,7 +1800,10 @@ GrapeRoot Dual-Graph Status:
     const list = document.getElementById('nodeList');
     list.innerHTML = '';
     if (!nodes || nodes.length === 0) {
-      list.innerHTML = '<div style="padding:10px;color:var(--muted);font-size:11.5px;">No matching nodes</div>';
+      list.innerHTML = `
+        <div style="padding:16px;text-align:center;color:var(--muted);font-size:12px;">
+          No matching graph nodes found. Run <code style="color:var(--emerald);">graperoot . --antigravity</code> to build graph.
+        </div>`;
       return;
     }
     nodes.forEach(n => {
@@ -1534,7 +1813,7 @@ GrapeRoot Dual-Graph Status:
       card.innerHTML = `
         <div class="node-card-top">
           <span class="node-id">${escapeHtml(n.id || n.path)}</span>
-          <span class="node-kind-badge">${n.kind || 'node'}</span>
+          <span class="node-kind-badge">${escapeHtml(n.kind || 'node')}</span>
         </div>
         <div class="node-summary">${escapeHtml(n.summary || n.name || n.path)}</div>
         ${kws ? `<div class="node-keywords">${kws}</div>` : ''}
@@ -1548,7 +1827,12 @@ GrapeRoot Dual-Graph Status:
     const q = document.getElementById('graphSearchInput').value.trim();
     if (!q) return loadGraphNodes();
     const list = document.getElementById('nodeList');
-    list.innerHTML = '<div style="padding:10px;color:var(--muted);font-size:11.5px;">Querying graph_retrieve...</div>';
+    list.innerHTML = `
+      <div class="spinner-box">
+        <div class="css-spinner"></div>
+        <span>Querying GrapeRoot graph_retrieve...</span>
+      </div>`;
+
     try {
       const res = await fetch('/api/graph/search', {
         method: 'POST',
@@ -1560,7 +1844,7 @@ GrapeRoot Dual-Graph Status:
       const normalized = Array.isArray(nodes) ? nodes.map(item => typeof item === 'string' ? { id: item, path: item, summary: 'Matched node' } : item) : [];
       renderNodes(normalized);
     } catch (e) {
-      list.innerHTML = `<div style="color:var(--red);font-size:11.5px;">Search error: ${e.message}</div>`;
+      list.innerHTML = `<div style="color:var(--red);font-size:11.5px;padding:12px;">Search error: ${escapeHtml(e.message)}</div>`;
     }
   }
 
@@ -1580,9 +1864,9 @@ GrapeRoot Dual-Graph Status:
       });
       const data = await res.json();
       content.textContent = data.result?.content || JSON.stringify(data.result, null, 2);
-      hljs.highlightElement(content);
+      if (window.hljs) hljs.highlightElement(content);
     } catch (e) {
-      content.textContent = 'Error: ' + e.message;
+      content.textContent = 'Error reading file: ' + e.message;
     }
   }
 
@@ -1599,7 +1883,7 @@ GrapeRoot Dual-Graph Status:
     const container = document.getElementById('memoryList');
     container.innerHTML = '';
     if (!list || list.length === 0) {
-      container.innerHTML = '<div style="padding:10px;color:var(--muted);font-size:11.5px;">No memories in context-store.json</div>';
+      container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:12px;">No memories recorded in context-store.json</div>';
       return;
     }
     list.forEach(m => {
@@ -1607,8 +1891,8 @@ GrapeRoot Dual-Graph Status:
       card.className = 'memory-card';
       card.innerHTML = `
         <div class="mem-header">
-          <span class="mem-type-badge ${m.type || 'fact'}">${m.type || 'fact'}</span>
-          <span class="mem-date">${m.date || 'today'}</span>
+          <span class="mem-type-badge ${escapeHtml(m.type || 'fact')}">${escapeHtml(m.type || 'fact')}</span>
+          <span class="mem-date">${escapeHtml(m.date || 'today')}</span>
         </div>
         <div class="mem-content">${escapeHtml(m.content)}</div>
       `;
@@ -1626,15 +1910,26 @@ GrapeRoot Dual-Graph Status:
     }
   }
 
-  async function promptAddMemory() {
-    const text = prompt('Enter memory content (max 15 words):');
-    if (!text) return;
-    const type = prompt('Enter type (decision | task | next | fact | blocker):', 'fact') || 'fact';
+  function toggleAddMemoryForm() {
+    const form = document.getElementById('addMemoryForm');
+    const isHidden = form.style.display === 'none' || !form.style.display;
+    form.style.display = isHidden ? 'flex' : 'none';
+    if (isHidden) document.getElementById('memContentInput').focus();
+  }
+
+  async function submitAddMemory() {
+    const content = document.getElementById('memContentInput').value.trim();
+    const type = document.getElementById('memTypeSelect').value;
+    if (!content) return;
+
     await fetch('/api/memory', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, content: text })
+      body: JSON.stringify({ type, content })
     });
+
+    document.getElementById('memContentInput').value = '';
+    toggleAddMemoryForm();
     loadMemory();
   }
 
@@ -1646,7 +1941,7 @@ GrapeRoot Dual-Graph Status:
       const container = document.getElementById('toolCallsList');
       container.innerHTML = '';
       if (!calls || calls.length === 0) {
-        container.innerHTML = '<div style="color:var(--muted);font-size:11px;">No tool calls logged yet</div>';
+        container.innerHTML = '<div style="color:var(--muted);font-size:11px;padding:8px 0;">No tool calls logged yet</div>';
         return;
       }
       calls.slice(0, 25).forEach(c => {
@@ -1666,7 +1961,7 @@ GrapeRoot Dual-Graph Status:
     currentSessionId = 'session_' + Date.now();
     terminalOutput.innerHTML = '';
     chatMessages.innerHTML = '';
-    printDiamondBanner();
+    initBanner();
     loadSessions();
   }
 
@@ -1695,13 +1990,14 @@ GrapeRoot Dual-Graph Status:
 
   async function saveSession() {
     if (!currentSessionId) currentSessionId = 'session_' + Date.now();
+    const title = (commandHistory[commandHistory.length - 1] || 'GrapeRoot Session').slice(0, 60);
     try {
       await fetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: currentSessionId,
-          title: commandHistory[0] || 'GrapeRoot Session'
+          title: title
         })
       });
       loadSessions();
@@ -1710,7 +2006,12 @@ GrapeRoot Dual-Graph Status:
 
   function escapeHtml(str) {
     if (!str) return '';
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 </script>
 </body>
