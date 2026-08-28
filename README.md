@@ -1,62 +1,61 @@
-# 🍇 GrapeRoot UI — Antigravity CLI Browser Interface
+# 🍇 GrapeRoot UI — Claude.ai-Quality Dual-Graph Interface
 
-> A full-featured browser-based Terminal + Chat interface that replicates the **GrapeRoot Dual-Graph + Google Antigravity CLI** experience locally on your desktop and across your local network (mobile/tablet).
+> A local, browser-based AI workspace that combines **Claude.ai's clean, minimalist UI** with **GrapeRoot Dual-Graph Context Injection**, compatible with **Claude Code**, **Google Antigravity**, **Gemini CLI**, **OpenAI Codex**, and **OpenCode**.
 
 [![GrapeRoot](https://img.shields.io/badge/GrapeRoot-Dual--Graph-10b981?style=for-the-badge)](https://github.com/kunal12203/GrapeRoot)
-[![Antigravity](https://img.shields.io/badge/Google-Antigravity-8b5cf6?style=for-the-badge)](https://antigravity.google)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 
 ---
 
-## 🚀 Key Features
+## ⚡ What is GrapeRoot?
 
-- **💻 Two-Panel Experience (Desktop)**:
-  - **Panel 1 (Left — Terminal Emulator)**: Exact GrapeRoot terminal with ASCII art logo, ANSI color rendering, live token & thought timers, collapsible tool call blocks (`(ctrl+o to expand)`), and full command history.
-  - **Panel 2 (Right — Chat Transcript)**: Clean conversational thread view with syntax-highlighted code blocks, copy buttons, and inline Dual-Graph retrieval badges.
-- **📱 Responsive Mobile Experience**:
-  - Touch-friendly layout with bottom tab switcher (`[ 💻 Terminal ]` and `[ 💬 Chat ]`).
-  - Seamless keyboard inset handling (`visualViewport`).
-- **🌐 Local Area Network (LAN) Access**:
-  - Express server binds to `0.0.0.0:3000` so any phone, tablet, or laptop on your Wi-Fi can connect directly via `http://<LAN-IP>:3000`.
-- **⚡ Zero API Keys Required**:
-  - Routes prompts directly through your active **Google Antigravity session (`agy`)** and Google activation token.
-- **🍇 GrapeRoot MCP FastMCP Integration**:
-  - Connected locally to `http://127.0.0.1:8080/mcp` for real-time `graph_continue`, `graph_read`, and `graph_scan` context retrieval across **48,000+ graph nodes**.
-- **💾 Session Persistence**:
-  - Automatic session history stored in `sessions.json` and `localStorage` with export capabilities.
+GrapeRoot is a local context engine that indexes your codebase into a semantic graph (files + symbols + edges) and exposes it via FastMCP. Every time you send a message, GrapeRoot automatically pre-loads the exact relevant files and symbol definitions into your prompt **before** the AI answers, saving 43%–81% tokens and eliminating blind exploration turns.
 
 ---
 
-## 🛠️ Supported Slash Commands
+## 🚀 Key Capabilities
 
-| Command | Action |
-|---|---|
-| `/help` | Show reference guide of all available commands |
-| `/scan` or `graph_scan` | Run GrapeRoot `graph_scan` to re-index the project |
-| `/read <filepath>` | Read code symbol or file via GrapeRoot MCP |
-| `/bash <command>` | Execute local shell commands with live streaming output |
-| `/compact` | Compact conversation context and record working state |
-| `/status` | View Dual-Graph connection, graph metrics, and network IPs |
-| `/model <name>` | Switch active model (`flash`, `pro`, `claude`, `codex`) |
-| `/history` | Show session command history |
-| `/export` | Export current session to JSON or plain text |
-| `/clear` | Clear terminal output |
-| `/new` | Start a fresh session |
+- **✨ Claude.ai-Inspired Design**: Clean 3-column layout (Sidebar, Center Chat, Collapsible Explorer) in dark theme.
+- **🔌 Universal AI Tool Compatibility**:
+  - Automatically detects which AI CLIs are installed on your system:
+    - `claude` (Claude Code)
+    - `agy` (Google Antigravity)
+    - `gemini` (Gemini CLI)
+    - `codex` (OpenAI Codex)
+    - `opencode` (OpenCode)
+    - `cursor` (Cursor CLI)
+  - Select your active AI tool from a dynamic dropdown directly inside the chat bar.
+- **🍇 GrapeRoot MCP Integration**:
+  - Automatically connects to `.dual-graph/mcp_port` (or port 8080).
+  - Pre-loads context via `graph_continue` and `graph_read`.
+  - Displays interactive confidence badges (`HIGH`, `MEDIUM`, `LOW`) on every response.
+- **🔍 Graph Explorer Panel**:
+  - Search codebase symbols, functions, and files (`graph_retrieve`).
+  - View full code snippets with syntax highlighting and line numbers (`graph_read`).
+- **🧠 Persistent Working Memory**:
+  - View and record architectural decisions, tasks, blockers, and facts in `context-store.json`.
+- **💻 Integrated Terminal & Shell Execution**:
+  - Built-in terminal emulator with full ANSI support, tool call collapsible cards, and slash commands (`/help`, `/scan`, `/read`, `/search`, `/bash`, `/memory`, `/remember`, `/model`, `/history`, `/export`, `/new`, `/compact`, `/status`, `/clear`).
+- **📱 Responsive & LAN Mobile Access**:
+  - Accessible on any mobile phone, tablet, or secondary laptop on your local Wi-Fi at `http://<LAN-IP>:3000`.
 
 ---
 
 ## 📦 Prerequisites
 
-1. **Node.js** (v18 or higher)
-2. **GrapeRoot MCP Server** (running on port `8080`)
-3. **Google Antigravity CLI (`agy`)** (signed in)
+1. **Node.js** (v18 or higher) — [https://nodejs.org/](https://nodejs.org/)
+2. **GrapeRoot Context Engine** (optional, recommended):
+   ```bash
+   pip install graperoot
+   ```
+3. Any supported AI CLI installed and authenticated (e.g. `claude`, `agy`, `gemini`, `codex`).
 
 ---
 
-## 🚀 How to Run
+## 🏁 Quick Start
 
-### Windows (One-Click)
-Double-click **`start.bat`** or run:
+### Windows
+Double-click `start.bat` or run:
 ```bat
 start.bat
 ```
@@ -68,39 +67,34 @@ chmod +x start.sh
 ./start.sh
 ```
 
-### Manual
+### Manual Start
 ```bash
 npm install
 node server.js
 ```
+Then open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 📱 Mobile Network Access
+## 🛠️ Slash Commands (Terminal Tab)
 
-1. Ensure your phone/tablet is connected to the same Wi-Fi network.
-2. Find your machine's LAN IP (displayed in the app header and startup terminal).
-3. Open your mobile browser and navigate to:
-   ```
-   http://<YOUR-LAN-IP>:3000
-   ```
-   *(e.g., `http://10.114.175.98:3000`)*
-
----
-
-## 🎨 Design Tokens
-
-- **Background**: `#0d1117`
-- **Surface**: `#161b22`
-- **Border**: `#30363d`
-- **GrapeRoot Emerald**: `#10b981`
-- **Dual-Graph Violet**: `#8b5cf6`
-- **Terminal Green**: `#39d353`
-- **Terminal Yellow**: `#e3b341`
-- **Terminal Cyan**: `#58a6ff`
-- **Terminal Font**: `'Cascadia Code', 'Fira Code', monospace`
+| Command | Action |
+|---|---|
+| `/help` | Show reference guide of all available commands |
+| `/scan` | Index workspace into Dual-Graph (`graph_scan`) |
+| `/read <file>` | Read file or symbol (`graph_read`) |
+| `/search <query>` | Semantic search across codebase (`graph_retrieve`) |
+| `/memory` | List context store memories |
+| `/remember <text>` | Save a fact or note to memory (`graph_add_memory`) |
+| `/bash <cmd>` | Execute shell command with live streaming output |
+| `/model <name>` | Switch active model |
+| `/compact` | Compact conversation context |
+| `/export` | Export session to JSON |
+| `/status` | View Dual-Graph connection, graph metrics, and network IPs |
+| `/clear` | Clear terminal logs |
+| `/new` | Start a fresh session |
 
 ---
 
 ## 📄 License
-MIT License. Built for the GrapeRoot & Antigravity community.
+MIT License. Built for the GrapeRoot & developer community.

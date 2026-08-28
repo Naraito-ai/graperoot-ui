@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>GrapeRoot UI — Antigravity Dual-Graph</title>
+  <title>GrapeRoot UI — Dual-Graph AI Workspace</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981'><path d='M12 2L14.4 8.6L21 11L14.4 13.4L12 20L9.6 13.4L3 11L9.6 8.6L12 2Z'/></svg>">
-  
+
   <!-- Marked.js for Markdown -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <!-- DOMPurify for XSS Sanitization -->
+  <!-- DOMPurify for XSS Protection -->
   <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
   <!-- Highlight.js for Syntax Highlighting -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
@@ -29,8 +29,9 @@
       --purple: #8b5cf6;
       --emerald: #10b981;
       --font-mono: 'Cascadia Code', 'Fira Code', Consolas, Monaco, monospace;
-      --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      --sidebar-width: 250px;
+      --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --sidebar-w: 260px;
+      --panel-w: 320px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -47,7 +48,7 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* Top Navigation Header */
+    /* Top Bar Header */
     .top-header {
       height: 48px;
       background: var(--surface);
@@ -55,7 +56,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 14px;
+      padding: 0 16px;
       flex-shrink: 0;
       z-index: 100;
     }
@@ -63,10 +64,10 @@
     .header-left {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
 
-    .brand-logo {
+    .brand-title {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -82,31 +83,15 @@
       -webkit-text-fill-color: transparent;
     }
 
-    .dir-pill {
-      font-family: var(--font-mono);
-      font-size: 11px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border);
-      padding: 2px 8px;
-      border-radius: 6px;
-      color: var(--muted);
-    }
-
-    .header-center {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .stats-pill {
+    .status-pill {
       display: flex;
       align-items: center;
       gap: 8px;
       background: rgba(16, 185, 129, 0.08);
       border: 1px solid rgba(16, 185, 129, 0.25);
-      padding: 4px 10px;
+      padding: 3px 10px;
       border-radius: 20px;
-      font-size: 11px;
+      font-size: 11.5px;
       color: #34d399;
       font-family: var(--font-mono);
     }
@@ -126,41 +111,32 @@
       gap: 8px;
     }
 
-    .model-badge {
-      background: rgba(139, 92, 246, 0.12);
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      color: #c4b5fd;
-      font-size: 11.5px;
-      padding: 3px 9px;
-      border-radius: 20px;
-      font-weight: 500;
-    }
-
-    .sidebar-btn {
+    .icon-btn {
       background: transparent;
       border: 1px solid var(--border);
       color: var(--muted);
-      padding: 4px 8px;
+      padding: 5px 8px;
       border-radius: 6px;
       cursor: pointer;
       display: flex;
       align-items: center;
+      justify-content: center;
       transition: all 0.15s;
     }
-    .sidebar-btn:hover { background: var(--surface-2); color: var(--text); }
-    .sidebar-btn.active { border-color: var(--emerald); color: var(--emerald); }
+    .icon-btn:hover { background: var(--surface-2); color: var(--text); border-color: var(--emerald); }
+    .icon-btn.active { background: var(--surface-2); color: var(--emerald); border-color: var(--emerald); }
 
-    /* App Body */
-    .app-body {
+    /* Main 3-Column Layout */
+    .app-layout {
       flex: 1;
       display: flex;
       overflow: hidden;
       position: relative;
     }
 
-    /* Sidebar (Session History) */
+    /* LEFT SIDEBAR */
     .sidebar {
-      width: var(--sidebar-width);
+      width: var(--sidebar-w);
       background: var(--surface);
       border-right: 1px solid var(--border);
       display: flex;
@@ -178,25 +154,25 @@
     }
 
     .sidebar-header {
-      padding: 10px 12px;
+      padding: 12px;
       border-bottom: 1px solid var(--border);
     }
 
-    .new-session-btn {
+    .new-chat-btn {
       width: 100%;
       background: var(--surface-2);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 7px 10px;
+      padding: 8px 12px;
       border-radius: 6px;
-      font-size: 12.5px;
+      font-size: 13px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: space-between;
       transition: all 0.15s;
     }
-    .new-session-btn:hover { background: #30363d; border-color: var(--emerald); }
+    .new-chat-btn:hover { background: #30363d; border-color: var(--emerald); }
 
     .session-list {
       flex: 1;
@@ -205,595 +181,391 @@
     }
 
     .session-item {
-      padding: 8px 10px;
+      padding: 9px 10px;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 12px;
-      color: var(--muted);
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 2px;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 3px;
+      transition: background 0.15s;
     }
-    .session-item:hover { background: var(--surface-2); color: var(--text); }
-    .session-item.active { background: var(--surface-2); color: var(--emerald); border-left: 2px solid var(--emerald); font-weight: 500; }
+    .session-item:hover { background: var(--surface-2); }
+    .session-item.active { background: var(--surface-2); border-left: 2px solid var(--emerald); }
 
-    .session-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; margin-right: 6px; }
-
-    .sidebar-footer {
-      padding: 10px 12px;
-      border-top: 1px solid var(--border);
+    .session-title {
+      font-size: 12.5px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .session-time {
       font-size: 10.5px;
       color: var(--muted);
+    }
+
+    .sidebar-footer {
+      padding: 12px;
+      border-top: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      gap: 3px;
-    }
-
-    /* Main Panels Container */
-    .panels-container {
-      flex: 1;
-      display: flex;
-      overflow: hidden;
-      width: 100%;
-    }
-
-    /* PANEL 1: TERMINAL EMULATOR */
-    .panel-terminal {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background: #080c10;
-      border-right: 1px solid var(--border);
-      min-width: 0;
-      position: relative;
-    }
-
-    .terminal-topbar {
-      height: 32px;
-      background: #0f141c;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 12px;
-      font-family: var(--font-mono);
+      gap: 6px;
       font-size: 11px;
-      color: var(--muted);
     }
 
-    .terminal-output {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px 14px;
-      font-family: var(--font-mono);
-      font-size: 12.5px;
-      line-height: 1.5;
-      color: var(--text);
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .terminal-output::-webkit-scrollbar { width: 5px; }
-    .terminal-output::-webkit-scrollbar-thumb { background: #21262d; border-radius: 4px; }
-
-    .ascii-diamond {
-      color: var(--green);
-      font-weight: bold;
-      line-height: 1.15;
-      margin-bottom: 12px;
-    }
-
-    /* Terminal Tool Call Blocks */
-    .tool-block {
-      background: #121824;
-      border: 1px solid #232d3d;
-      border-radius: 6px;
-      margin: 6px 0;
-      overflow: hidden;
-    }
-
-    .tool-block-header {
-      padding: 6px 10px;
-      background: #171f2e;
+    .tool-pills {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-      font-size: 11.5px;
+      flex-wrap: wrap;
+      gap: 4px;
     }
-    .tool-block-header:hover { background: #1c2638; }
 
-    .tool-title { color: var(--cyan); font-weight: 600; }
-
-    .tool-tag {
-      font-size: 10px;
-      padding: 1px 6px;
-      border-radius: 4px;
-    }
-    .tool-tag.running { background: rgba(227, 179, 65, 0.15); color: var(--yellow); }
-    .tool-tag.done { background: rgba(57, 211, 83, 0.15); color: var(--green); }
-    .tool-tag.error { background: rgba(248, 81, 73, 0.15); color: var(--red); }
-
-    .tool-output {
-      padding: 8px 10px;
-      background: #0a0e14;
-      font-size: 11.5px;
-      border-top: 1px solid #232d3d;
-      max-height: 240px;
-      overflow-y: auto;
-      display: none;
-      position: relative;
-    }
-    .tool-block.expanded .tool-output { display: block; }
-
-    .copy-tool-btn {
-      position: absolute;
-      top: 6px;
-      right: 8px;
-      background: rgba(255, 255, 255, 0.1);
-      border: none;
-      color: var(--muted);
-      font-size: 10px;
+    .tool-pill {
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      color: #c4b5fd;
       padding: 2px 6px;
       border-radius: 4px;
-      cursor: pointer;
-    }
-    .copy-tool-btn:hover { color: white; background: rgba(255, 255, 255, 0.2); }
-
-    .term-thought {
-      color: var(--muted);
-      font-style: italic;
-      margin: 4px 0;
-      font-size: 11.5px;
-    }
-
-    .term-compact-bar {
-      text-align: center;
-      color: var(--yellow);
-      margin: 8px 0;
-      font-size: 11px;
-      border-top: 1px dashed var(--yellow);
-      padding-top: 3px;
-    }
-
-    .terminal-input-bar {
-      background: #0f141c;
-      border-top: 1px solid var(--border);
-      padding: 8px 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .term-prompt { color: var(--emerald); font-family: var(--font-mono); font-weight: bold; }
-    .term-input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: var(--text);
+      font-size: 10px;
       font-family: var(--font-mono);
-      font-size: 13px;
     }
 
-    /* PANEL 2: CHAT + GRAPH EXPLORER (TABS) */
-    .panel-explorer {
+    /* CENTER MAIN CHAT AREA */
+    .chat-area {
       flex: 1;
       display: flex;
       flex-direction: column;
       background: var(--bg);
       min-width: 0;
       position: relative;
+      overflow: hidden;
     }
 
-    .tabs-header {
-      height: 36px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      padding: 0 10px;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-
-    .tab-btn {
-      background: transparent;
-      border: none;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 500;
-      padding: 5px 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      transition: all 0.15s;
-    }
-    .tab-btn:hover { background: var(--surface-2); color: var(--text); }
-    .tab-btn.active { background: var(--surface-2); color: var(--emerald); font-weight: 600; }
-
-    .tab-content {
-      flex: 1;
-      overflow-y: auto;
-      display: none;
-      flex-direction: column;
-    }
-    .tab-content.active { display: flex; }
-
-    /* TAB 1: CHAT */
     .chat-messages {
       flex: 1;
       overflow-y: auto;
-      padding: 16px;
+      padding: 24px 20px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 20px;
+      max-width: 840px;
+      width: 100%;
+      margin: 0 auto;
     }
 
-    .chat-row { display: flex; width: 100%; flex-direction: column; }
-    .chat-row.user { align-items: flex-end; }
-    .chat-row.assistant { align-items: flex-start; }
+    /* Empty State */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 16px;
+      text-align: center;
+      margin: auto 0;
+    }
 
-    .chat-user-bubble {
+    .empty-icon { font-size: 38px; margin-bottom: 12px; }
+    .empty-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .empty-subtitle { font-size: 13.5px; color: var(--muted); margin-bottom: 24px; }
+
+    .suggestions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      width: 100%;
+      max-width: 720px;
+    }
+
+    .suggestion-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .suggestion-card:hover { background: var(--surface-2); border-color: var(--emerald); }
+    .suggestion-text { font-size: 12.5px; color: var(--text); }
+
+    /* Messages */
+    .message-row { display: flex; width: 100%; flex-direction: column; }
+    .message-row.user { align-items: flex-end; }
+    .message-row.assistant { align-items: flex-start; }
+
+    .user-bubble {
       background: #1f2937;
       border: 1px solid #374151;
       color: var(--text);
-      padding: 8px 14px;
-      border-radius: 14px 14px 2px 14px;
-      max-width: 85%;
-      font-size: 13.5px;
+      padding: 10px 16px;
+      border-radius: 16px 16px 2px 16px;
+      max-width: 80%;
+      font-size: 14px;
       line-height: 1.5;
+      word-break: break-word;
     }
 
-    .chat-ai-box {
-      max-width: 95%;
+    .ai-wrapper {
+      width: 100%;
+      max-width: 100%;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
       position: relative;
     }
 
-    .chat-ai-top {
+    .ai-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
 
-    .chat-ai-header {
+    .ai-author {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 11.5px;
-      color: var(--emerald);
+      gap: 8px;
+      font-size: 12.5px;
       font-weight: 600;
+      color: var(--emerald);
     }
 
-    .chat-ai-avatar {
-      width: 20px;
-      height: 20px;
+    .ai-avatar {
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
-      background: rgba(16, 185, 129, 0.2);
+      background: rgba(16, 185, 129, 0.15);
       border: 1px solid rgba(16, 185, 129, 0.4);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 11px;
-      color: var(--emerald);
-      font-weight: bold;
+      font-size: 12px;
     }
 
-    .chat-copy-btn {
-      background: transparent;
+    .copy-msg-btn {
+      opacity: 0;
+      background: var(--surface);
       border: 1px solid var(--border);
       color: var(--muted);
-      font-size: 10.5px;
-      padding: 2px 7px;
+      font-size: 11px;
+      padding: 2px 8px;
       border-radius: 4px;
       cursor: pointer;
-      display: flex;
+      transition: opacity 0.15s, background 0.15s;
+    }
+    .ai-wrapper:hover .copy-msg-btn { opacity: 1; }
+    .copy-msg-btn:hover { background: var(--surface-2); color: var(--text); }
+
+    .graph-chip {
+      display: inline-flex;
       align-items: center;
-      gap: 4px;
-      transition: all 0.15s;
-    }
-    .chat-copy-btn:hover { background: var(--surface-2); color: var(--text); }
-
-    .chat-ai-text {
-      font-size: 13.5px;
-      line-height: 1.6;
-      color: var(--text);
-    }
-    .chat-ai-text p { margin-bottom: 8px; }
-    .chat-ai-text p:last-child { margin-bottom: 0; }
-    .chat-ai-text code { font-family: var(--font-mono); background: #161b22; padding: 2px 5px; border-radius: 4px; color: #34d399; font-size: 12px; }
-    .chat-ai-text pre { background: #0d1117; border: 1px solid var(--border); border-radius: 6px; padding: 10px; margin: 8px 0; overflow-x: auto; }
-    .chat-ai-text pre code { background: transparent; padding: 0; color: #e6edf3; }
-
-    .graph-context-chip {
+      gap: 6px;
       background: rgba(16, 185, 129, 0.08);
       border: 1px solid rgba(16, 185, 129, 0.25);
       border-radius: 6px;
-      padding: 5px 9px;
-      font-size: 11px;
+      padding: 4px 8px;
+      font-size: 11.5px;
       color: #34d399;
       font-family: var(--font-mono);
-      margin-bottom: 4px;
+      width: fit-content;
     }
+    .graph-chip.medium { background: rgba(227, 179, 65, 0.08); border-color: rgba(227, 179, 65, 0.25); color: var(--yellow); }
+    .graph-chip.low { background: rgba(248, 81, 73, 0.08); border-color: rgba(248, 81, 73, 0.25); color: var(--red); }
 
-    /* TAB 2: GRAPH EXPLORER */
-    .graph-pane {
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      height: 100%;
-    }
-
-    .graph-search-bar {
-      display: flex;
-      gap: 8px;
-    }
-
-    .graph-search-input {
-      flex: 1;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 7px 12px;
-      border-radius: 6px;
+    .ai-body {
+      font-size: 14px;
+      line-height: 1.65;
       color: var(--text);
-      font-family: var(--font-mono);
-      font-size: 12.5px;
-      outline: none;
     }
-    .graph-search-input:focus { border-color: var(--emerald); }
+    .ai-body p { margin-bottom: 10px; }
+    .ai-body p:last-child { margin-bottom: 0; }
+    .ai-body code { font-family: var(--font-mono); background: #161b22; padding: 2px 5px; border-radius: 4px; color: #34d399; font-size: 12.5px; }
+    .ai-body pre { background: #080c10; border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin: 10px 0; overflow-x: auto; }
+    .ai-body pre code { background: transparent; padding: 0; color: #e6edf3; }
 
-    .btn-search {
-      background: var(--surface-2);
+    /* Input Bar (Claude.ai style) */
+    .input-section {
+      padding: 12px 20px 20px 20px;
+      background: transparent;
+      max-width: 840px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .input-card {
+      background: var(--surface);
       border: 1px solid var(--border);
-      color: var(--emerald);
-      padding: 7px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 12.5px;
-      font-weight: 500;
-    }
-    .btn-search:hover { background: #30363d; }
-
-    .node-list {
-      flex: 1;
-      overflow-y: auto;
+      border-radius: 14px;
+      padding: 10px 14px;
       display: flex;
       flex-direction: column;
       gap: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      transition: border-color 0.15s;
+    }
+    .input-card:focus-within { border-color: var(--emerald); }
+
+    .chat-textarea {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: var(--font-ui);
+      font-size: 14px;
+      line-height: 1.5;
+      resize: none;
+      height: 24px;
+      max-height: 200px;
+      width: 100%;
     }
 
-    .node-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 10px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .node-card:hover { border-color: var(--emerald); background: var(--surface-2); }
-
-    .node-card-top {
+    .input-toolbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      padding-top: 4px;
     }
 
-    .node-id { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--cyan); }
-    .node-kind-badge { font-size: 10px; padding: 1px 6px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); color: var(--muted); }
+    .tool-select-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
 
-    .node-summary { font-size: 11.5px; color: var(--text); }
-    .node-keywords { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
-    .kw-tag { font-size: 10px; background: rgba(139, 92, 246, 0.15); color: #c4b5fd; padding: 1px 5px; border-radius: 3px; font-family: var(--font-mono); }
-
-    /* Code Viewer Modal / Drawer */
-    .code-viewer-drawer {
-      background: #080c10;
+    .tool-selector {
+      background: var(--surface-2);
       border: 1px solid var(--border);
+      color: var(--text);
+      padding: 4px 8px;
       border-radius: 6px;
-      padding: 10px;
-      max-height: 280px;
-      overflow-y: auto;
-      font-family: var(--font-mono);
-      font-size: 11.5px;
-      display: none;
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
     }
 
-    /* Loading Spinner */
-    .spinner-box {
+    .send-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      padding: 24px;
-      color: var(--muted);
-      font-size: 12px;
+      transition: all 0.15s;
     }
+    .send-btn.active { background: var(--emerald); color: #042f2e; border-color: var(--emerald); }
+    .send-btn.generating { animation: pulse 1s infinite alternate; }
 
-    .css-spinner {
-      width: 16px;
-      height: 16px;
-      border: 2px solid var(--border);
-      border-top-color: var(--emerald);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
+    @keyframes pulse { 0% { opacity: 0.5; } 100% { opacity: 1; } }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* TAB 3: STATS */
-    .stats-pane {
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      overflow-y: auto;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 10px;
-    }
-
-    .stat-box {
+    /* RIGHT PANEL (COLLAPSIBLE) */
+    .right-panel {
+      width: var(--panel-w);
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
+      border-left: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      height: 100%;
+      flex-shrink: 0;
+      transition: transform 0.25s ease, width 0.25s ease;
+      z-index: 80;
     }
-    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 600; }
-    .stat-val { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--emerald); }
 
-    .tool-calls-table {
+    .right-panel.collapsed {
+      transform: translateX(100%);
+      width: 0;
+      position: absolute;
+    }
+
+    .panel-tabs-bar {
+      height: 38px;
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .log-row {
+      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      padding: 4px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-    }
-    .log-tool { color: var(--cyan); font-weight: 600; }
-    .log-time { color: var(--muted); font-size: 10px; }
-
-    /* TAB 4: MEMORY */
-    .memory-pane {
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      overflow-y: auto;
-    }
-
-    .mem-topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .mem-filter-tabs {
-      display: flex;
+      padding: 0 8px;
       gap: 4px;
+      flex-shrink: 0;
     }
 
-    .mem-filter-btn {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--muted);
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .mem-filter-btn.active { background: var(--surface-2); color: var(--emerald); border-color: var(--emerald); }
-
-    .btn-add-mem {
-      background: var(--emerald);
-      color: #042f2e;
+    .panel-tab-btn {
+      background: transparent;
       border: none;
-      padding: 5px 12px;
-      border-radius: 6px;
+      color: var(--muted);
       font-size: 11.5px;
-      font-weight: 600;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 6px;
       cursor: pointer;
+      transition: all 0.15s;
     }
+    .panel-tab-btn:hover { background: var(--surface-2); color: var(--text); }
+    .panel-tab-btn.active { background: var(--surface-2); color: var(--emerald); font-weight: 600; }
 
-    /* Add Memory Inline Form/Modal */
-    .add-memory-card {
-      background: #111722;
-      border: 1px solid var(--emerald);
-      border-radius: 8px;
-      padding: 12px;
+    .panel-content {
+      flex: 1;
+      overflow-y: auto;
       display: none;
       flex-direction: column;
-      gap: 8px;
     }
+    .panel-content.active { display: flex; }
 
-    .mem-input-text {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 7px 10px;
-      border-radius: 6px;
-      font-size: 12.5px;
-      outline: none;
-      font-family: var(--font-ui);
-    }
-    .mem-input-text:focus { border-color: var(--emerald); }
+    /* Graph Tab */
+    .graph-pane { padding: 12px; display: flex; flex-direction: column; gap: 10px; height: 100%; }
+    .search-row { display: flex; gap: 6px; }
+    .search-input { flex: 1; background: var(--bg); border: 1px solid var(--border); padding: 6px 10px; border-radius: 6px; color: var(--text); font-size: 12px; outline: none; }
+    .search-btn { background: var(--surface-2); border: 1px solid var(--border); color: var(--emerald); padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
 
-    .mem-form-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .nodes-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+    .node-item { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; cursor: pointer; display: flex; flex-direction: column; gap: 3px; }
+    .node-item:hover { border-color: var(--emerald); }
+    .node-title { font-family: var(--font-mono); font-size: 11.5px; color: var(--cyan); font-weight: 600; }
+    .node-desc { font-size: 11px; color: var(--text); }
 
-    .mem-select {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: 12px;
-      outline: none;
-    }
+    .code-drawer { background: #080c10; border: 1px solid var(--border); border-radius: 6px; padding: 8px; font-family: var(--font-mono); font-size: 11px; max-height: 220px; overflow-y: auto; display: none; }
 
-    .memory-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 10px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .mem-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .mem-type-badge {
-      font-size: 10px;
-      text-transform: uppercase;
-      font-weight: 700;
-      padding: 1px 6px;
-      border-radius: 3px;
-    }
-    .mem-type-badge.decision { background: rgba(57, 211, 83, 0.15); color: var(--green); }
-    .mem-type-badge.task { background: rgba(88, 166, 255, 0.15); color: var(--cyan); }
-    .mem-type-badge.blocker { background: rgba(248, 81, 73, 0.15); color: var(--red); }
-    .mem-type-badge.fact { background: rgba(227, 179, 65, 0.15); color: var(--yellow); }
-    .mem-type-badge.next { background: rgba(139, 92, 246, 0.15); color: var(--purple); }
+    /* Memory Tab */
+    .memory-pane { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .mem-filter-bar { display: flex; gap: 4px; flex-wrap: wrap; }
+    .filter-chip { background: var(--bg); border: 1px solid var(--border); color: var(--muted); font-size: 10.5px; padding: 2px 6px; border-radius: 4px; cursor: pointer; }
+    .filter-chip.active { background: var(--surface-2); color: var(--emerald); border-color: var(--emerald); }
 
-    .mem-content { font-size: 13px; color: var(--text); }
-    .mem-date { font-size: 10px; color: var(--muted); font-family: var(--font-mono); }
+    .add-mem-card { background: #111722; border: 1px solid var(--emerald); border-radius: 6px; padding: 10px; display: none; flex-direction: column; gap: 6px; }
+    .mem-textarea { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 6px 8px; border-radius: 4px; font-size: 12px; outline: none; }
+    .mem-select { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 4px 6px; border-radius: 4px; font-size: 11px; outline: none; }
 
-    /* Mobile Bottom Tabs */
-    .mobile-tab-bar {
+    .memory-item { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 3px; }
+    .mem-tag { font-size: 9.5px; text-transform: uppercase; font-weight: bold; padding: 1px 5px; border-radius: 3px; width: fit-content; }
+    .mem-tag.fact { background: rgba(227, 179, 65, 0.15); color: var(--yellow); }
+    .mem-tag.decision { background: rgba(57, 211, 83, 0.15); color: var(--green); }
+    .mem-tag.task { background: rgba(88, 166, 255, 0.15); color: var(--cyan); }
+    .mem-tag.blocker { background: rgba(248, 81, 73, 0.15); color: var(--red); }
+    .mem-tag.next { background: rgba(139, 92, 246, 0.15); color: var(--purple); }
+
+    /* Stats Tab */
+    .stats-pane { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stat-card { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 2px; }
+    .stat-num { font-family: var(--font-mono); font-size: 17px; font-weight: 700; color: var(--emerald); }
+    .stat-label { font-size: 10.5px; color: var(--muted); text-transform: uppercase; }
+
+    /* Terminal Tab */
+    .terminal-pane { background: #080c10; flex: 1; display: flex; flex-direction: column; overflow: hidden; font-family: var(--font-mono); font-size: 12px; }
+    .term-logs { flex: 1; overflow-y: auto; padding: 10px; line-height: 1.5; color: var(--text); white-space: pre-wrap; }
+    .term-input-row { background: #0f141c; border-top: 1px solid var(--border); padding: 6px 10px; display: flex; align-items: center; gap: 6px; }
+    .term-prompt { color: var(--emerald); font-weight: bold; }
+    .term-box { flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-family: var(--font-mono); font-size: 12px; }
+
+    /* Tool call blocks in terminal */
+    .t-block { background: #121824; border: 1px solid #232d3d; border-radius: 5px; margin: 4px 0; overflow: hidden; }
+    .t-head { padding: 4px 8px; background: #171f2e; display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 11px; }
+    .t-body { padding: 6px 8px; background: #0a0e14; font-size: 11px; border-top: 1px solid #232d3d; max-height: 180px; overflow-y: auto; display: none; position: relative; }
+    .t-block.expanded .t-body { display: block; }
+
+    /* Mobile Navigation */
+    .mobile-nav {
       display: none;
       height: 48px;
       background: var(--surface);
@@ -802,7 +574,7 @@
       z-index: 100;
     }
 
-    .mob-tab-btn {
+    .m-nav-btn {
       background: transparent;
       border: none;
       color: var(--muted);
@@ -812,217 +584,209 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 3px;
+      gap: 2px;
       cursor: pointer;
     }
-    .mob-tab-btn.active { color: var(--emerald); border-top: 2px solid var(--emerald); }
-
-    .mob-tab-svg {
-      width: 16px;
-      height: 16px;
-      fill: currentColor;
-    }
+    .m-nav-btn.active { color: var(--emerald); border-top: 2px solid var(--emerald); }
+    .m-nav-svg { width: 16px; height: 16px; fill: currentColor; }
 
     @media (max-width: 768px) {
-      .header-center { display: none; }
-      .panels-container { flex-direction: column; }
-      .mobile-tab-bar { display: grid; }
-      .panel-terminal, .panel-explorer { display: none; width: 100%; height: 100%; }
-      .panel-terminal.mobile-active, .panel-explorer.mobile-active { display: flex; }
+      .mobile-nav { display: grid; }
       .sidebar { position: absolute; left: 0; top: 0; bottom: 0; transform: translateX(-100%); }
       .sidebar.open { transform: translateX(0); }
+      .right-panel { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; }
+      .right-panel.collapsed { display: none; }
+      .chat-area.mobile-hide { display: none; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Header Bar -->
+  <!-- Top Header -->
   <header class="top-header">
     <div class="header-left">
-      <button class="sidebar-btn" id="sidebarToggleBtn" onclick="toggleSidebar()" aria-label="Toggle Navigation Sidebar" title="Toggle Sidebar">
+      <button class="icon-btn" id="sidebarToggle" onclick="toggleSidebar()" aria-label="Toggle Sidebar" title="Toggle Sidebar">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
       </button>
-      <div class="brand-logo" onclick="startNewSession()">
+      <div class="brand-title" onclick="startNewSession()">
         <span>🍇</span>
         <span>Grape<span class="brand-gradient">Root</span></span>
       </div>
-      <span class="dir-pill" id="activeDriveBadge">D:\</span>
-    </div>
-
-    <div class="header-center">
-      <div class="stats-pill" id="statsPill">
+      <div class="status-pill" id="statusPill">
         <span class="status-dot" id="mcpDot"></span>
-        <span id="statsPillText">48,067 Nodes · 66,536 Edges · 13,603 Files</span>
+        <span id="statusPillText">Loading...</span>
       </div>
     </div>
 
     <div class="header-right">
-      <div class="model-badge" id="activeModelBadge">Gemini 3.7 Flash (High)</div>
+      <button class="icon-btn active" id="panelToggle" onclick="toggleRightPanel()" aria-label="Toggle Tools Panel" title="Toggle Tools Panel">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H5V5h9v12zm5 0h-3V5h3v12z"/></svg>
+      </button>
     </div>
   </header>
 
-  <!-- App Body -->
-  <div class="app-body">
-    <!-- Sidebar (Session List) -->
+  <!-- 3-Column Layout -->
+  <div class="app-layout">
+    <!-- LEFT SIDEBAR -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <button class="new-session-btn" onclick="startNewSession()">
-          <span>+ New Session</span>
-          <span style="font-size:10px;opacity:0.6;" id="sessionShortcutBadge">Ctrl+K</span>
+        <button class="new-chat-btn" onclick="startNewSession()">
+          <span>+ New Chat</span>
+          <span style="font-size:10px;opacity:0.6;" id="shortcutLabel">Ctrl+K</span>
         </button>
       </div>
 
       <div class="session-list" id="sessionList"></div>
 
       <div class="sidebar-footer">
-        <div style="color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="userBadge">Google Antigravity Session</div>
-        <div style="font-family:var(--font-mono);font-size:10px;opacity:0.7;" id="versionBadge">Antigravity CLI 1.1.21</div>
-        <div style="font-family:var(--font-mono);font-size:10px;color:var(--cyan);" id="lanIpBadge">LAN: 10.114.175.98:3000</div>
+        <div style="font-size:10.5px;color:var(--muted);">Detected AI CLIs:</div>
+        <div class="tool-pills" id="detectedToolsPills"></div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--cyan);margin-top:4px;" id="lanDisplay"></div>
       </div>
     </aside>
 
-    <!-- Two Main Panels -->
-    <div class="panels-container">
-      <!-- PANEL 1: Terminal Emulator (Left) -->
-      <section class="panel-terminal mobile-active" id="panelTerminal">
-        <div class="terminal-topbar">
-          <span>TERMINAL · (Ctrl+O to expand tools)</span>
-          <span id="termStatusBadge" style="color:var(--green);">READY</span>
-        </div>
-
-        <div class="terminal-output" id="terminalOutput"></div>
-
-        <div class="terminal-input-bar">
-          <span class="term-prompt">▸</span>
-          <input type="text" class="term-input" id="termInput" placeholder="Type prompt or /help, /scan, /read, /search, /bash..." autofocus autocomplete="off">
-        </div>
-      </section>
-
-      <!-- PANEL 2: Chat + Explorer Tabs (Right) -->
-      <section class="panel-explorer" id="panelExplorer">
-        <!-- Tabs Bar -->
-        <div class="tabs-header">
-          <button class="tab-btn active" onclick="switchExplorerTab('chat', this)">💬 Chat</button>
-          <button class="tab-btn" onclick="switchExplorerTab('graph', this)">🔍 Graph</button>
-          <button class="tab-btn" onclick="switchExplorerTab('stats', this)">📊 Stats</button>
-          <button class="tab-btn" onclick="switchExplorerTab('memory', this)">🧠 Memory</button>
-        </div>
-
-        <!-- TAB 1: Chat -->
-        <div class="tab-content active" id="tabChat">
-          <div class="chat-messages" id="chatMessages">
-            <div style="text-align:center;padding:30px 10px;color:var(--muted);">
-              <div style="font-size:28px;margin-bottom:6px;">🍇</div>
-              <h3 style="color:var(--text);margin-bottom:2px;">GrapeRoot Dual-Graph Chat</h3>
-              <p style="font-size:12.5px;">Direct transcript connected to Google Antigravity</p>
+    <!-- CENTER MAIN CHAT -->
+    <main class="chat-area" id="chatArea">
+      <div class="chat-messages" id="chatMessages">
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">🍇</div>
+          <div class="empty-title">GrapeRoot Dual-Graph Chat</div>
+          <div class="empty-subtitle">Pre-loaded codebase context. Zero blind exploration turns.</div>
+          <div class="suggestions-grid">
+            <div class="suggestion-card" onclick="useSuggestion('Explain the architecture of this project')">
+              <div class="suggestion-text">"Explain the architecture of this project"</div>
+            </div>
+            <div class="suggestion-card" onclick="useSuggestion('Find and fix any bugs in server.js')">
+              <div class="suggestion-text">"Find and fix any bugs in server.js"</div>
+            </div>
+            <div class="suggestion-card" onclick="useSuggestion('Add a new feature to...')">
+              <div class="suggestion-text">"Add a new feature to..."</div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- TAB 2: Graph Explorer -->
-        <div class="tab-content" id="tabGraph">
-          <div class="graph-pane">
-            <div class="graph-search-bar">
-              <input type="text" class="graph-search-input" id="graphSearchInput" placeholder="Search symbol, function, or file...">
-              <button class="btn-search" onclick="runGraphSearch()">Search</button>
+      <!-- Input Bar -->
+      <div class="input-section">
+        <div class="input-card">
+          <textarea class="chat-textarea" id="chatInput" placeholder="Message GrapeRoot..." rows="1"></textarea>
+          <div class="input-toolbar">
+            <div class="tool-select-wrapper">
+              <select class="tool-selector" id="toolSelector" title="Select AI Engine"></select>
             </div>
-
-            <div class="code-viewer-drawer" id="codeViewer">
-              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                <span id="codeViewerTitle" style="color:var(--cyan);font-weight:600;"></span>
-                <button onclick="document.getElementById('codeViewer').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;" title="Close code viewer (Esc)">✕</button>
-              </div>
-              <pre><code id="codeViewerContent"></code></pre>
-            </div>
-
-            <div class="node-list" id="nodeList"></div>
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()" aria-label="Send message">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
           </div>
         </div>
+      </div>
+    </main>
 
-        <!-- TAB 3: Stats -->
-        <div class="tab-content" id="tabStats">
-          <div class="stats-pane">
-            <div class="stats-grid">
-              <div class="stat-box">
-                <span class="stat-label">Graph Nodes</span>
-                <span class="stat-val" id="statNodes">48,067</span>
-              </div>
-              <div class="stat-box">
-                <span class="stat-label">Graph Edges</span>
-                <span class="stat-val" id="statEdges">66,536</span>
-              </div>
-              <div class="stat-box">
-                <span class="stat-label">Indexed Files</span>
-                <span class="stat-val" id="statFiles">13,603</span>
-              </div>
-              <div class="stat-box">
-                <span class="stat-label">Symbols</span>
-                <span class="stat-val" id="statSymbols">34,464</span>
-              </div>
+    <!-- RIGHT TOOLS PANEL (COLLAPSIBLE) -->
+    <aside class="right-panel" id="rightPanel">
+      <div class="panel-tabs-bar">
+        <button class="panel-tab-btn active" onclick="switchTab('graph', this)">Graph</button>
+        <button class="panel-tab-btn" onclick="switchTab('memory', this)">Memory</button>
+        <button class="panel-tab-btn" onclick="switchTab('stats', this)">Stats</button>
+        <button class="panel-tab-btn" onclick="switchTab('terminal', this)">Terminal</button>
+      </div>
+
+      <!-- Graph Explorer Tab -->
+      <div class="panel-content active" id="tabGraph">
+        <div class="graph-pane">
+          <div class="search-row">
+            <input type="text" class="search-input" id="graphSearchInput" placeholder="Search symbols, files...">
+            <button class="search-btn" onclick="runGraphSearch()">Search</button>
+          </div>
+          <div class="code-drawer" id="codeDrawer">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+              <span id="codeDrawerTitle" style="color:var(--cyan);font-weight:600;"></span>
+              <button onclick="document.getElementById('codeDrawer').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;">✕</button>
             </div>
+            <pre><code id="codeDrawerContent"></code></pre>
+          </div>
+          <div class="nodes-container" id="nodesContainer"></div>
+        </div>
+      </div>
 
-            <div class="tool-calls-table">
-              <span style="font-size:12px;font-weight:600;color:var(--text);">Recent Tool Invocations (mcp_tool_calls.jsonl)</span>
-              <div id="toolCallsList" style="display:flex;flex-direction:column;gap:4px;"></div>
+      <!-- Memory Tab -->
+      <div class="panel-content" id="tabMemory">
+        <div class="memory-pane">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="mem-filter-bar">
+              <button class="filter-chip active" onclick="filterMem('all', this)">All</button>
+              <button class="filter-chip" onclick="filterMem('decision', this)">Decision</button>
+              <button class="filter-chip" onclick="filterMem('task', this)">Task</button>
+              <button class="filter-chip" onclick="filterMem('fact', this)">Fact</button>
+              <button class="filter-chip" onclick="filterMem('blocker', this)">Blocker</button>
+            </div>
+            <button class="search-btn" onclick="toggleAddMemoryForm()">+ Add</button>
+          </div>
+
+          <div class="add-mem-card" id="addMemForm">
+            <textarea class="mem-textarea" id="memContent" placeholder="Record memory (max 15 words)..." rows="2"></textarea>
+            <div style="display:flex;gap:6px;">
+              <select class="mem-select" id="memType">
+                <option value="fact">Fact</option>
+                <option value="decision">Decision</option>
+                <option value="task">Task</option>
+                <option value="blocker">Blocker</option>
+                <option value="next">Next Step</option>
+              </select>
+              <button class="search-btn" onclick="submitMemory()">Save</button>
+              <button class="search-btn" style="color:var(--muted);" onclick="toggleAddMemoryForm()">Cancel</button>
             </div>
           </div>
+
+          <div id="memoryContainer" style="display:flex;flex-direction:column;gap:6px;"></div>
         </div>
+      </div>
 
-        <!-- TAB 4: Memory -->
-        <div class="tab-content" id="tabMemory">
-          <div class="memory-pane">
-            <div class="mem-topbar">
-              <div class="mem-filter-tabs">
-                <button class="mem-filter-btn active" onclick="filterMemory('all', this)">All</button>
-                <button class="mem-filter-btn" onclick="filterMemory('decision', this)">Decision</button>
-                <button class="mem-filter-btn" onclick="filterMemory('task', this)">Task</button>
-                <button class="mem-filter-btn" onclick="filterMemory('fact', this)">Fact</button>
-                <button class="mem-filter-btn" onclick="filterMemory('blocker', this)">Blocker</button>
-              </div>
-              <button class="btn-add-mem" onclick="toggleAddMemoryForm()">+ Add Memory</button>
-            </div>
+      <!-- Stats Tab -->
+      <div class="panel-content" id="tabStats">
+        <div class="stats-pane">
+          <div class="stats-grid">
+            <div class="stat-card"><span class="stat-num" id="sNodes">0</span><span class="stat-label">Nodes</span></div>
+            <div class="stat-card"><span class="stat-num" id="sEdges">0</span><span class="stat-label">Edges</span></div>
+            <div class="stat-card"><span class="stat-num" id="sFiles">0</span><span class="stat-label">Files</span></div>
+            <div class="stat-card"><span class="stat-num" id="sSymbols">0</span><span class="stat-label">Symbols</span></div>
+          </div>
+          <div style="font-size:12px;font-weight:600;margin-top:6px;">Recent Tool Invocations:</div>
+          <div id="toolCallLogs" style="display:flex;flex-direction:column;gap:4px;font-family:var(--font-mono);font-size:11px;"></div>
+        </div>
+      </div>
 
-            <!-- Inline Add Memory Form -->
-            <div class="add-memory-card" id="addMemoryForm">
-              <span style="font-size:12px;font-weight:600;color:var(--emerald);">Add Entry to Context Store</span>
-              <input type="text" class="mem-input-text" id="memContentInput" placeholder="Fact, decision, or blocker (one sentence, max 15 words)...">
-              <div class="mem-form-row">
-                <select class="mem-select" id="memTypeSelect">
-                  <option value="fact">Fact</option>
-                  <option value="decision">Decision</option>
-                  <option value="task">Task</option>
-                  <option value="next">Next Step</option>
-                  <option value="blocker">Blocker</option>
-                </select>
-                <button class="btn-add-mem" onclick="submitAddMemory()">Save</button>
-                <button class="btn-search" style="color:var(--muted);" onclick="toggleAddMemoryForm()">Cancel</button>
-              </div>
-            </div>
-
-            <div id="memoryList" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <!-- Terminal Tab -->
+      <div class="panel-content" id="tabTerminal">
+        <div class="terminal-pane">
+          <div class="term-logs" id="termLogs"></div>
+          <div class="term-input-row">
+            <span class="term-prompt">▸</span>
+            <input type="text" class="term-box" id="termInput" placeholder="Type prompt or /help, /scan, /read...">
           </div>
         </div>
-      </section>
-    </div>
+      </div>
+    </aside>
   </div>
 
-  <!-- Mobile Bottom Tab Bar with Inline SVGs -->
-  <nav class="mobile-tab-bar">
-    <button class="mob-tab-btn active" id="mTabTerm" onclick="switchMobileView('terminal')">
-      <svg class="mob-tab-svg" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v10zm-2-1h-6v-2h6v2zm-8.29-4.71L6.71 11.3 9.41 14l-2.7 2.7 1.41 1.41 4.12-4.11-4.13-4.11z"/></svg>
-      <span>Terminal</span>
-    </button>
-    <button class="mob-tab-btn" id="mTabChat" onclick="switchMobileView('chat')">
-      <svg class="mob-tab-svg" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/></svg>
+  <!-- Mobile Bottom Navigation -->
+  <nav class="mobile-nav">
+    <button class="m-nav-btn active" id="mChat" onclick="switchMobileNav('chat')">
+      <svg class="m-nav-svg" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/></svg>
       <span>Chat</span>
     </button>
-    <button class="mob-tab-btn" id="mTabGraph" onclick="switchMobileView('graph')">
-      <svg class="mob-tab-svg" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+    <button class="m-nav-btn" id="mGraph" onclick="switchMobileNav('graph')">
+      <svg class="m-nav-svg" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
       <span>Graph</span>
     </button>
-    <button class="mob-tab-btn" id="mTabMem" onclick="switchMobileView('memory')">
-      <svg class="mob-tab-svg" viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.8 12.16 7 10.63 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"/></svg>
+    <button class="m-nav-btn" id="mMem" onclick="switchMobileNav('memory')">
+      <svg class="m-nav-svg" viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
       <span>Memory</span>
+    </button>
+    <button class="m-nav-btn" id="mTerm" onclick="switchMobileNav('terminal')">
+      <svg class="m-nav-svg" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-2 13h-6v-2h6v2zm-8.29-4.71L6.71 11.3 9.41 14l-2.7 2.7 1.41 1.41 4.12-4.11-4.13-4.11z"/></svg>
+      <span>Terminal</span>
     </button>
   </nav>
 
@@ -1032,46 +796,27 @@
   let commandHistory = [];
   let historyIndex = -1;
   let isGenerating = false;
-  let currentModel = 'gemini-3.7-flash';
   let memoryData = [];
   let statusFailures = 0;
-  let statusIntervalId = null;
+  let statusInterval = null;
 
-  const terminalOutput = document.getElementById('terminalOutput');
-  const termInput = document.getElementById('termInput');
   const chatMessages = document.getElementById('chatMessages');
+  const chatInput = document.getElementById('chatInput');
+  const sendBtn = document.getElementById('sendBtn');
   const sessionList = document.getElementById('sessionList');
   const sidebar = document.getElementById('sidebar');
+  const rightPanel = document.getElementById('rightPanel');
+  const termLogs = document.getElementById('termLogs');
+  const termInput = document.getElementById('termInput');
 
-  // Configure marked.js with GFM & breaks
   if (window.marked) {
     marked.setOptions({ breaks: true, gfm: true });
   }
 
-  // Model selection map
-  const MODELS = {
-    flash: { id: 'gemini-3.7-flash', label: 'Gemini 3.7 Flash (High)' },
-    '3.7-flash': { id: 'gemini-3.7-flash', label: 'Gemini 3.7 Flash (High)' },
-    '3.5-flash': { id: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash' },
-    pro: { id: 'gemini-3.7-pro', label: 'Gemini 3.7 Pro (High)' },
-    '3.7-pro': { id: 'gemini-3.7-pro', label: 'Gemini 3.7 Pro (High)' },
-    claude: { id: 'claude-sonnet', label: 'Claude Sonnet' },
-    sonnet: { id: 'claude-sonnet', label: 'Claude Sonnet' },
-    codex: { id: 'codex', label: 'OpenAI Codex' },
-    'gpt-oss': { id: 'gpt-oss-120b', label: 'GPT-OSS-120B' }
-  };
-
-  // Build Dynamic Diamond Banner
-  function buildDiamondBanner(user, drive, version, model) {
-    return `    ▄▀▀▄        ${version || 'Antigravity CLI 1.1.21'}
-   ▀▀▀▀▀▀       ${user || 'saivarshithuduthalaboina@gmail.com (Google AI Pro)'}
-  ▀▀▀▀▀▀▀▀      ${model || 'Gemini 3.7 Flash (High)'}
- ▄▀▀    ▀▀▄     ${drive || 'D:\\'}
-▄▀▀      ▀▀▄    GrapeRoot Dual-Graph Engine Active\n`;
-  }
-
   window.addEventListener('DOMContentLoaded', async () => {
-    // Restore command history from localStorage
+    const isMac = (navigator.platform || navigator.userAgent || '').toUpperCase().includes('MAC');
+    document.getElementById('shortcutLabel').textContent = isMac ? '⌘K' : 'Ctrl+K';
+
     try {
       commandHistory = JSON.parse(localStorage.getItem('graperoot_history') || '[]');
       historyIndex = commandHistory.length;
@@ -1079,53 +824,39 @@
       commandHistory = [];
     }
 
-    // Platform detection for Mac/Windows shortcut label
-    const isMac = (navigator.platform || navigator.userAgent || '').toUpperCase().includes('MAC');
-    const shortcutEl = document.getElementById('sessionShortcutBadge');
-    if (shortcutEl) shortcutEl.textContent = isMac ? '⌘K' : 'Ctrl+K';
-
-    // Initialize Dynamic Banner
-    await initBanner();
-
+    await fetchStatus();
     loadSessions();
     loadGraphNodes();
     loadMemory();
     loadToolCalls();
 
-    // Start status polling with backoff support
     setupStatusPolling(10000);
     setInterval(loadToolCalls, 10000);
 
-    // Global Keydown Listeners
-    window.addEventListener('keydown', (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    // Auto-resize chat textarea
+    chatInput.addEventListener('input', () => {
+      chatInput.style.height = 'auto';
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 200) + 'px';
+      sendBtn.classList.toggle('active', chatInput.value.trim().length > 0);
+    });
+
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        startNewSession();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') {
-        e.preventDefault();
-        toggleAllToolBlocks();
-      }
-      if (e.key === 'Escape') {
-        const drawer = document.getElementById('codeViewer');
-        if (drawer) drawer.style.display = 'none';
-        const addMem = document.getElementById('addMemoryForm');
-        if (addMem) addMem.style.display = 'none';
+        sendMessage();
       }
     });
 
-    // Terminal Input Handling
+    // Terminal command execution
     termInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         const val = termInput.value.trim();
         if (val) {
           commandHistory.push(val);
-          try {
-            localStorage.setItem('graperoot_history', JSON.stringify(commandHistory.slice(-100)));
-          } catch (err) {}
+          localStorage.setItem('graperoot_history', JSON.stringify(commandHistory.slice(-100)));
           historyIndex = commandHistory.length;
           termInput.value = '';
-          handleCommand(val);
+          handleTerminalCommand(val);
         }
       } else if (e.key === 'ArrowUp') {
         if (historyIndex > 0) {
@@ -1143,12 +874,23 @@
       }
     });
 
-    // Graph search on Enter
-    document.getElementById('graphSearchInput').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') runGraphSearch();
+    // Global keyboard shortcuts
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        startNewSession();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') {
+        e.preventDefault();
+        document.querySelectorAll('.t-block').forEach(b => b.classList.toggle('expanded'));
+      }
+      if (e.key === 'Escape') {
+        document.getElementById('codeDrawer').style.display = 'none';
+        document.getElementById('addMemForm').style.display = 'none';
+      }
     });
 
-    // Mobile Keyboard insets
+    // Mobile Virtual Keyboard Handling
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', () => {
         document.body.style.height = `${window.visualViewport.height}px`;
@@ -1156,36 +898,101 @@
     }
   });
 
-  async function initBanner() {
-    try {
-      const res = await fetch('/api/status');
-      const d = await res.json();
-      printDiamondBanner(d);
-      updateStatusUI(d);
-    } catch (e) {
-      printDiamondBanner(null);
+  // Relative Time Formatter
+  function relativeTime(isoString) {
+    if (!isoString) return 'just now';
+    const diff = Date.now() - new Date(isoString).getTime();
+    if (diff < 60000) return 'just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} hr ago`;
+    if (diff < 172800000) return 'yesterday';
+    return new Date(isoString).toLocaleDateString();
+  }
+
+  // Populate Tool Selector
+  function populateToolSelector(tools) {
+    const select = document.getElementById('toolSelector');
+    select.innerHTML = '';
+    const toolLabels = {
+      claude: 'Claude Code',
+      agy: 'Antigravity',
+      gemini: 'Gemini CLI',
+      codex: 'OpenAI Codex',
+      opencode: 'OpenCode',
+      cursor: 'Cursor'
+    };
+
+    (tools || []).forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t;
+      opt.textContent = toolLabels[t] || t;
+      select.appendChild(opt);
+    });
+
+    if (!tools || tools.length === 0) {
+      const opt = document.createElement('option');
+      opt.value = 'none';
+      opt.textContent = 'No AI CLI Found';
+      select.appendChild(opt);
     }
   }
 
-  function printDiamondBanner(d) {
-    terminalOutput.innerHTML = '';
-    const bannerText = d 
-      ? buildDiamondBanner(d.user, d.activeDrive, d.version, d.model)
-      : buildDiamondBanner('Google Antigravity Session', 'D:\\', 'Antigravity CLI 1.1.21', 'Gemini 3.7 Flash (High)');
-    
-    const div = document.createElement('div');
-    div.className = 'ascii-diamond';
-    div.textContent = bannerText;
-    terminalOutput.appendChild(div);
-    printTermLine('Ready. Type a prompt or /help for all GrapeRoot commands.\n', '#8b949e');
+  // Fetch Status
+  async function fetchStatus() {
+    try {
+      const res = await fetch('/api/status');
+      if (res.ok) {
+        const d = await res.json();
+        updateStatusView(d);
+        if (statusFailures > 0) {
+          statusFailures = 0;
+          setupStatusPolling(10000);
+        }
+      } else {
+        handleStatusFailure();
+      }
+    } catch (e) {
+      handleStatusFailure();
+    }
   }
 
-  function printTermLine(text, color = null) {
-    const span = document.createElement('div');
-    span.textContent = text;
-    if (color) span.style.color = color;
-    terminalOutput.appendChild(span);
-    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+  function setupStatusPolling(interval) {
+    if (statusInterval) clearInterval(statusInterval);
+    statusInterval = setInterval(fetchStatus, interval);
+  }
+
+  function handleStatusFailure() {
+    statusFailures++;
+    document.getElementById('mcpDot').className = 'status-dot offline';
+    document.getElementById('statusPillText').textContent = 'MCP Offline';
+    if (statusFailures >= 3) {
+      setupStatusPolling(60000);
+    }
+  }
+
+  function updateStatusView(d) {
+    const dot = document.getElementById('mcpDot');
+    dot.className = 'status-dot' + (d.mcp ? '' : ' offline');
+
+    const totalNodes = d.graph?.nodes ? Number(d.graph.nodes).toLocaleString() : '0';
+    document.getElementById('statusPillText').textContent = d.mcp ? `${totalNodes} Graph Nodes` : 'MCP Offline';
+
+    if (d.graph) {
+      document.getElementById('sNodes').textContent = Number(d.graph.nodes || 0).toLocaleString();
+      document.getElementById('sEdges').textContent = Number(d.graph.edges || 0).toLocaleString();
+      document.getElementById('sFiles').textContent = Number(d.graph.files || 0).toLocaleString();
+      document.getElementById('sSymbols').textContent = Number(d.graph.symbols || 0).toLocaleString();
+    }
+
+    if (d.detectedTools) {
+      populateToolSelector(d.detectedTools);
+      const container = document.getElementById('detectedToolsPills');
+      container.innerHTML = d.detectedTools.map(t => `<span class="tool-pill">${escapeHtml(t)}</span>`).join('');
+    }
+
+    if (d.lanIp) {
+      document.getElementById('lanDisplay').textContent = `Mobile LAN: http://${d.lanIp}:${d.port || 3000}`;
+    }
   }
 
   function toggleSidebar() {
@@ -1195,407 +1002,89 @@
     } else {
       sidebar.classList.toggle('collapsed');
     }
-    const btn = document.getElementById('sidebarToggleBtn');
-    if (btn) {
-      btn.classList.toggle('active', isMobile ? sidebar.classList.contains('open') : !sidebar.classList.contains('collapsed'));
-    }
   }
 
-  function switchExplorerTab(tabName, btn) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  function toggleRightPanel() {
+    rightPanel.classList.toggle('collapsed');
+    document.getElementById('panelToggle').classList.toggle('active', !rightPanel.classList.contains('collapsed'));
+  }
+
+  function switchTab(tab, btn) {
+    document.querySelectorAll('.panel-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel-content').forEach(c => c.classList.remove('active'));
     if (btn) btn.classList.add('active');
 
-    const target = document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+    const target = document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
     if (target) target.classList.add('active');
-
-    if (tabName === 'stats') loadToolCalls();
-    if (tabName === 'memory') loadMemory();
   }
 
-  function switchMobileView(view) {
-    const termPanel = document.getElementById('panelTerminal');
-    const expPanel = document.getElementById('panelExplorer');
-    document.querySelectorAll('.mob-tab-btn').forEach(b => b.classList.remove('active'));
+  function switchMobileNav(view) {
+    document.querySelectorAll('.m-nav-btn').forEach(b => b.classList.remove('active'));
+    const chatArea = document.getElementById('chatArea');
 
-    if (view === 'terminal') {
-      termPanel.classList.add('mobile-active');
-      expPanel.classList.remove('mobile-active');
-      const btn = document.getElementById('mTabTerm');
-      if (btn) btn.classList.add('active');
+    if (view === 'chat') {
+      chatArea.classList.remove('mobile-hide');
+      rightPanel.classList.add('collapsed');
+      document.getElementById('mChat').classList.add('active');
     } else {
-      termPanel.classList.remove('mobile-active');
-      expPanel.classList.add('mobile-active');
-      const tabs = document.querySelectorAll('.tab-btn');
-
-      if (view === 'chat') {
-        if (tabs && tabs[0]) switchExplorerTab('chat', tabs[0]);
-        const btn = document.getElementById('mTabChat');
-        if (btn) btn.classList.add('active');
-      } else if (view === 'graph') {
-        if (tabs && tabs[1]) switchExplorerTab('graph', tabs[1]);
-        const btn = document.getElementById('mTabGraph');
-        if (btn) btn.classList.add('active');
+      chatArea.classList.add('mobile-hide');
+      rightPanel.classList.remove('collapsed');
+      if (view === 'graph') {
+        switchTab('graph', document.querySelectorAll('.panel-tab-btn')[0]);
+        document.getElementById('mGraph').classList.add('active');
       } else if (view === 'memory') {
-        if (tabs && tabs[3]) switchExplorerTab('memory', tabs[3]);
-        const btn = document.getElementById('mTabMem');
-        if (btn) btn.classList.add('active');
+        switchTab('memory', document.querySelectorAll('.panel-tab-btn')[1]);
+        document.getElementById('mMem').classList.add('active');
+      } else if (view === 'terminal') {
+        switchTab('terminal', document.querySelectorAll('.panel-tab-btn')[3]);
+        document.getElementById('mTerm').classList.add('active');
       }
     }
   }
 
-  function setupStatusPolling(intervalMs) {
-    if (statusIntervalId) clearInterval(statusIntervalId);
-    statusIntervalId = setInterval(async () => {
-      try {
-        const res = await fetch('/api/status');
-        if (res.ok) {
-          const data = await res.json();
-          updateStatusUI(data);
-          if (statusFailures > 0) {
-            statusFailures = 0;
-            setupStatusPolling(10000); // reset to normal
-          }
-        } else {
-          handleStatusFailure();
-        }
-      } catch (e) {
-        handleStatusFailure();
-      }
-    }, intervalMs);
+  function useSuggestion(text) {
+    chatInput.value = text;
+    chatInput.focus();
+    chatInput.dispatchEvent(new Event('input'));
   }
 
-  function handleStatusFailure() {
-    statusFailures++;
-    document.getElementById('mcpDot').className = 'status-dot offline';
-    if (statusFailures >= 3) {
-      setupStatusPolling(60000); // back off to 60s
-    }
-  }
+  // Chat Execution
+  async function sendMessage() {
+    const text = chatInput.value.trim();
+    if (!text || isGenerating) return;
 
-  function updateStatusUI(data) {
-    if (data.graph) {
-      document.getElementById('statsPillText').textContent = 
-        `${Number(data.graph.nodes).toLocaleString()} Nodes · ${Number(data.graph.edges).toLocaleString()} Edges · ${Number(data.graph.files).toLocaleString()} Files`;
-      document.getElementById('statNodes').textContent = Number(data.graph.nodes).toLocaleString();
-      document.getElementById('statEdges').textContent = Number(data.graph.edges).toLocaleString();
-      document.getElementById('statFiles').textContent = Number(data.graph.files).toLocaleString();
-      document.getElementById('statSymbols').textContent = Number(data.graph.symbols).toLocaleString();
-    }
-    document.getElementById('mcpDot').className = 'status-dot' + (data.mcp ? '' : ' offline');
-    if (data.lanIp) document.getElementById('lanIpBadge').textContent = `LAN: http://${data.lanIp}:${data.port || 3000}`;
-    if (data.activeDrive) document.getElementById('activeDriveBadge').textContent = data.activeDrive;
-    if (data.user) document.getElementById('userBadge').textContent = data.user;
-    if (data.version) document.getElementById('versionBadge').textContent = data.version;
-  }
+    const empty = document.getElementById('emptyState');
+    if (empty) empty.style.display = 'none';
 
-  function toggleAllToolBlocks() {
-    document.querySelectorAll('.tool-block').forEach(b => b.classList.toggle('expanded'));
-  }
-
-  // Handle Commands
-  async function handleCommand(cmd) {
-    printTermLine(`> ${cmd}`, '#e6edf3');
-    appendChatUser(cmd);
-
-    if (cmd.startsWith('/')) {
-      const parts = cmd.slice(1).split(' ');
-      const action = parts[0].toLowerCase();
-      const arg = parts.slice(1).join(' ').trim();
-
-      switch (action) {
-        case 'help':
-          printHelp();
-          break;
-        case 'clear':
-          terminalOutput.innerHTML = '';
-          initBanner();
-          break;
-        case 'status':
-          showStatusCmd();
-          break;
-        case 'scan':
-        case 'graph_scan':
-          runGraphScan();
-          break;
-        case 'read':
-          runGraphRead(arg);
-          break;
-        case 'search':
-          runSearchCmd(arg);
-          break;
-        case 'memory':
-          showMemoryCmd();
-          break;
-        case 'remember':
-          addMemoryCmd(arg);
-          break;
-        case 'bash':
-          runBashCmd(arg);
-          break;
-        case 'model':
-          switchModelCmd(arg);
-          break;
-        case 'history':
-          showHistoryCmd();
-          break;
-        case 'export':
-          exportSession();
-          break;
-        case 'new':
-          startNewSession();
-          break;
-        case 'compact':
-          triggerCompact();
-          break;
-        case 'stats':
-          showStatsCmd();
-          break;
-        default:
-          printTermLine(`Unknown command /${action}. Type /help for all commands.`, '#f85149');
-      }
-      return;
-    }
-
-    // Standard AI Prompt -> Antigravity
-    await sendPromptToAntigravity(cmd);
-  }
-
-  function printHelp() {
-    const help = `
-GrapeRoot Commands:
-  /help            Show this help menu
-  /clear           Clear terminal window
-  /status          Display Dual-Graph status & network URLs
-  /scan            Trigger graph_scan(project_root: ".")
-  /read <file>     Call graph_read for file or symbol (e.g. /read bot.py::on_message)
-  /search <query>  Call graph_retrieve for semantic search
-  /memory          List context-store.json entries
-  /remember <txt>  Add fact to memory (graph_add_memory)
-  /bash <cmd>      Execute shell command locally
-  /model <name>    Switch active model (/model pro, /model flash, /model claude, /model codex)
-  /history         Show recent session commands
-  /export          Export session as JSON
-  /new             Start fresh session
-  /compact         Add compact divider
-  /stats           Display token stats & tool counts
-  <prompt>         Execute prompt via Google Antigravity session
-`;
-    printTermLine(help, '#58a6ff');
-  }
-
-  function showStatusCmd() {
-    fetch('/api/status').then(r => r.json()).then(d => {
-      printTermLine(`
-GrapeRoot Dual-Graph Status:
-  MCP Server    : ${d.mcp ? 'CONNECTED (port ' + d.mcpPort + ')' : 'DISCONNECTED'}
-  Graph Nodes   : ${d.graph?.nodes} nodes, ${d.graph?.edges} edges, ${d.graph?.files} files
-  Active Model  : ${d.model}
-  Active User   : ${d.user}
-  CLI Version   : ${d.version}
-  Local URL     : http://localhost:${d.port}
-  LAN Mobile    : http://${d.lanIp}:${d.port}
-`, '#39d353');
-    });
-  }
-
-  function triggerCompact() {
-    const div = document.createElement('div');
-    div.className = 'term-compact-bar';
-    div.textContent = '── Conversation compacted ──';
-    terminalOutput.appendChild(div);
-    printTermLine('Context successfully pruned into working memory.\n', '#e3b341');
-  }
-
-  async function runGraphScan() {
-    printTermLine('🍇 Running GrapeRoot graph_scan...', '#e3b341');
-    const toolEl = createToolBlock('graph_scan', { project_root: '.' });
-    try {
-      const res = await fetch('/mcp-tool', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tool: 'graph_scan', args: { project_root: '.' } })
-      });
-      const data = await res.json();
-      updateToolBlock(toolEl, 'done', JSON.stringify(data.result || data, null, 2));
-      await fetchStatus();
-      printTermLine('✅ graph_scan complete!', '#39d353');
-    } catch (e) {
-      updateToolBlock(toolEl, 'error', e.message);
-    }
-  }
-
-  async function runGraphRead(file) {
-    if (!file) {
-      printTermLine('Usage: /read <filepath or file::symbol>', '#f85149');
-      return;
-    }
-    printTermLine(`🍇 Calling graph_read("${file}")...`, '#58a6ff');
-    const toolEl = createToolBlock('graph_read', { file });
-    try {
-      const res = await fetch('/api/graph/read', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file })
-      });
-      const data = await res.json();
-      const content = data.result?.content || JSON.stringify(data.result, null, 2);
-      updateToolBlock(toolEl, 'done', content);
-      printTermLine(`📄 Read ${file} (${content.length} chars)`, '#39d353');
-    } catch (e) {
-      updateToolBlock(toolEl, 'error', e.message);
-    }
-  }
-
-  async function runSearchCmd(query) {
-    if (!query) {
-      printTermLine('Usage: /search <query>', '#f85149');
-      return;
-    }
-    printTermLine(`🔍 Calling graph_retrieve("${query}")...`, '#58a6ff');
-    const toolEl = createToolBlock('graph_retrieve', { query });
-    try {
-      const res = await fetch('/api/graph/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query })
-      });
-      const data = await res.json();
-      updateToolBlock(toolEl, 'done', JSON.stringify(data.result, null, 2));
-    } catch (e) {
-      updateToolBlock(toolEl, 'error', e.message);
-    }
-  }
-
-  async function showMemoryCmd() {
-    const res = await fetch('/api/memory');
-    const list = await res.json();
-    printTermLine(`🧠 Context Store Memories (${list.length}):\n` + 
-      list.map(m => `  [${(m.type || 'fact').toUpperCase()}] ${m.content} (${m.date || 'today'})`).join('\n'), '#c4b5fd');
-  }
-
-  async function addMemoryCmd(text) {
-    if (!text) {
-      printTermLine('Usage: /remember <fact/task text>', '#f85149');
-      return;
-    }
-    await fetch('/api/memory', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'fact', content: text })
-    });
-    printTermLine(`✅ Added memory: "${text}"`, '#39d353');
-    loadMemory();
-  }
-
-  async function runBashCmd(command) {
-    if (!command) {
-      printTermLine('Usage: /bash <command>', '#f85149');
-      return;
-    }
-    const toolEl = createToolBlock('Bash', { command });
-    try {
-      const res = await fetch('/bash', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ command })
-      });
-      const reader = res.body.getReader();
-      const dec = new TextDecoder();
-      let full = '';
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const text = dec.decode(value);
-        for (const line of text.split('\n')) {
-          if (line.startsWith('data:')) {
-            try {
-              const d = JSON.parse(line.slice(5).trim());
-              if (d.text) { full += d.text; appendToolOutput(toolEl, d.text); }
-            } catch (e) {}
-          }
-        }
-      }
-      updateToolBlock(toolEl, 'done', full);
-    } catch (e) {
-      updateToolBlock(toolEl, 'error', e.message);
-    }
-  }
-
-  function switchModelCmd(name) {
-    if (!name) {
-      printTermLine(`Active model: ${currentModel}. Use /model <name> to switch.`, '#58a6ff');
-      return;
-    }
-    const key = name.toLowerCase().trim();
-    const m = MODELS[key];
-    if (!m) {
-      printTermLine(`Unknown model "${name}". Available models: ${Object.keys(MODELS).join(', ')}`, '#f85149');
-      return;
-    }
-    currentModel = m.id;
-    document.getElementById('activeModelBadge').textContent = m.label;
-    printTermLine(`Switched model to ${m.label}`, '#39d353');
-  }
-
-  function showHistoryCmd() {
-    printTermLine('Session Commands:\n' + commandHistory.map((c, i) => `  ${i + 1}. ${c}`).join('\n'), '#8b949e');
-  }
-
-  function showStatsCmd() {
-    fetch('/mcp-tool', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tool: 'get_session_stats' })
-    }).then(r => r.json()).then(d => {
-      printTermLine('Session Stats: ' + JSON.stringify(d.result || d, null, 2), '#39d353');
-    }).catch(e => printTermLine('Stats: ' + e.message, '#f85149'));
-  }
-
-  function exportSession() {
-    const data = {
-      sessionId: currentSessionId,
-      exportedAt: new Date().toISOString(),
-      commands: commandHistory
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `graperoot-${Date.now()}.json`;
-    a.click();
-    printTermLine('✅ Exported session to JSON!', '#39d353');
-  }
-
-  // AI Prompt Execution Flow with 120s timeout and debounced rendering
-  async function sendPromptToAntigravity(promptText) {
-    if (isGenerating) return;
+    chatInput.value = '';
+    chatInput.style.height = '24px';
+    sendBtn.classList.remove('active');
     isGenerating = true;
-    document.getElementById('termStatusBadge').textContent = 'THINKING...';
-    document.getElementById('termStatusBadge').style.color = 'var(--yellow)';
+    sendBtn.classList.add('generating');
 
-    const aiChatEl = appendChatAiPlaceholder();
-    let termAiText = '';
-    let renderDebounce = null;
-    const aiSpan = document.createElement('div');
-    aiSpan.style.color = '#e6edf3';
-    terminalOutput.appendChild(aiSpan);
+    appendUserMessage(text);
+    const aiEl = appendAiPlaceholder();
 
+    const selectedTool = document.getElementById('toolSelector').value;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 120000);
 
+    let rawTokens = '';
+    let renderDebounce = null;
+
     try {
-      const response = await fetch('/chat', {
+      const res = await fetch('/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: promptText,
-          model: currentModel,
+          message: text,
+          tool: selectedTool,
           sessionId: currentSessionId
         }),
         signal: controller.signal
       });
 
-      const reader = response.body.getReader();
+      const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
 
@@ -1616,26 +1105,15 @@ GrapeRoot Dual-Graph Status:
             try {
               const data = JSON.parse(dataStr);
 
-              if (data.type === 'tool_start') {
-                createToolBlock(data.data.name, data.data.args);
-              } else if (data.type === 'tool_end') {
-                // tool finished
-              } else if (data.type === 'thought') {
-                const thoughtEl = document.createElement('div');
-                thoughtEl.className = 'term-thought';
-                thoughtEl.textContent = `▸ ${data.data.text}`;
-                terminalOutput.appendChild(thoughtEl);
-              } else if (data.type === 'graph_context') {
-                renderChatGraphContext(aiChatEl, data.data);
+              if (data.type === 'graph_context') {
+                renderGraphChip(aiEl, data.data);
+              } else if (data.type === 'tool_start') {
+                appendTerminalToolBlock(data.data.name, data.data.args);
               } else if (data.type === 'token') {
-                termAiText += data.data.text;
-                aiSpan.textContent = termAiText;
-                terminalOutput.scrollTop = terminalOutput.scrollHeight;
-
-                // Debounced chat rendering for high performance
+                rawTokens += data.data.text;
                 clearTimeout(renderDebounce);
                 renderDebounce = setTimeout(() => {
-                  updateChatAiContent(aiChatEl, termAiText);
+                  updateAiContent(aiEl, rawTokens);
                 }, 250);
               }
             } catch (e) {}
@@ -1643,92 +1121,40 @@ GrapeRoot Dual-Graph Status:
         }
       }
     } catch (e) {
-      printTermLine(`⚠️ Error: ${e.name === 'AbortError' ? 'Request timed out after 120s' : e.message}`, '#f85149');
+      updateAiContent(aiEl, `*(Error: ${e.name === 'AbortError' ? 'Streaming timed out after 120s' : e.message})*`);
     } finally {
       clearTimeout(timeoutId);
       clearTimeout(renderDebounce);
-      updateChatAiContent(aiChatEl, termAiText);
+      updateAiContent(aiEl, rawTokens);
       isGenerating = false;
-      document.getElementById('termStatusBadge').textContent = 'READY';
-      document.getElementById('termStatusBadge').style.color = 'var(--green)';
+      sendBtn.classList.remove('generating');
       chatMessages.scrollTop = chatMessages.scrollHeight;
-      saveSession();
+      saveSession(text);
     }
   }
 
-  // Tool Block Component
-  function createToolBlock(name, args) {
-    const block = document.createElement('div');
-    block.className = 'tool-block';
-    const argsStr = typeof args === 'object' ? JSON.stringify(args) : String(args);
-    const truncatedArgs = argsStr.slice(0, 45);
-
-    block.innerHTML = `
-      <div class="tool-block-header" onclick="this.parentElement.classList.toggle('expanded')">
-        <div>
-          <span class="tool-title">● ${escapeHtml(name)}</span>
-          <span style="color:var(--muted);margin-left:6px;">(${escapeHtml(truncatedArgs)})</span>
-          <span style="font-size:10px;color:var(--muted);margin-left:6px;">(ctrl+o to expand)</span>
-        </div>
-        <span class="tool-tag running">running</span>
-      </div>
-      <div class="tool-output">
-        <button class="copy-tool-btn" onclick="copyToolBlock(this)">Copy</button>
-        <pre><code></code></pre>
-      </div>
-    `;
-    terminalOutput.appendChild(block);
-    terminalOutput.scrollTop = terminalOutput.scrollHeight;
-    return block;
-  }
-
-  function updateToolBlock(block, status, output) {
-    if (!block) return;
-    const tag = block.querySelector('.tool-tag');
-    if (tag) { tag.className = 'tool-tag ' + status; tag.textContent = status; }
-    const code = block.querySelector('code');
-    if (code) code.textContent = output;
-  }
-
-  function appendToolOutput(block, chunk) {
-    if (!block) return;
-    const code = block.querySelector('code');
-    if (code) code.textContent += chunk;
-  }
-
-  window.copyToolBlock = function(btn) {
-    const code = btn.parentElement.querySelector('code');
-    if (code) {
-      navigator.clipboard.writeText(code.innerText).then(() => {
-        btn.textContent = 'Copied!';
-        setTimeout(() => btn.textContent = 'Copy', 1500);
-      });
-    }
-  };
-
-  // Chat Component Functions
-  function appendChatUser(text) {
+  function appendUserMessage(text) {
     const row = document.createElement('div');
-    row.className = 'chat-row user';
-    row.innerHTML = `<div class="chat-user-bubble">> ${escapeHtml(text)}</div>`;
+    row.className = 'message-row user';
+    row.innerHTML = `<div class="user-bubble">${escapeHtml(text)}</div>`;
     chatMessages.appendChild(row);
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
-  function appendChatAiPlaceholder() {
+  function appendAiPlaceholder() {
     const row = document.createElement('div');
-    row.className = 'chat-row assistant';
+    row.className = 'message-row assistant';
     row.innerHTML = `
-      <div class="chat-ai-box">
-        <div class="chat-ai-top">
-          <div class="chat-ai-header">
-            <div class="chat-ai-avatar">G</div>
-            <span>GrapeRoot Antigravity</span>
+      <div class="ai-wrapper">
+        <div class="ai-header">
+          <div class="ai-author">
+            <div class="ai-avatar">🍇</div>
+            <span>GrapeRoot</span>
           </div>
-          <button class="chat-copy-btn" onclick="copyChatRaw(this)">Copy</button>
+          <button class="copy-msg-btn" onclick="copyAiMessage(this)">Copy</button>
         </div>
-        <div class="chat-graph-slot"></div>
-        <div class="chat-ai-text">...</div>
+        <div class="graph-slot"></div>
+        <div class="ai-body">...</div>
       </div>
     `;
     chatMessages.appendChild(row);
@@ -1736,37 +1162,39 @@ GrapeRoot Dual-Graph Status:
     return row;
   }
 
-  function renderChatGraphContext(rowEl, data) {
-    const slot = rowEl.querySelector('.chat-graph-slot');
+  function renderGraphChip(rowEl, data) {
+    const slot = rowEl.querySelector('.graph-slot');
     if (!slot) return;
-    const files = Array.isArray(data.files) ? data.files : [];
+    const conf = (data.confidence || 'high').toLowerCase();
+    const count = data.files?.length || 0;
     slot.innerHTML = `
-      <div class="graph-context-chip">
-        🍇 Dual-Graph: <strong>${escapeHtml(data.confidence?.toUpperCase() || 'HIGH')}</strong> confidence · ${files.length} nodes pre-loaded
+      <div class="graph-chip ${conf}">
+        🍇 <strong>${conf.toUpperCase()}</strong> confidence · ${count} nodes pre-loaded
       </div>
     `;
   }
 
-  function updateChatAiContent(rowEl, markdownText) {
+  function updateAiContent(rowEl, text) {
     if (!rowEl) return;
-    const textEl = rowEl.querySelector('.chat-ai-text');
-    if (textEl) {
-      rowEl.setAttribute('data-raw-markdown', markdownText || '');
+    const body = rowEl.querySelector('.ai-body');
+    const wrapper = rowEl.querySelector('.ai-wrapper');
+    if (wrapper) wrapper.setAttribute('data-raw', text || '');
+    if (body) {
       if (window.marked && window.DOMPurify) {
-        textEl.innerHTML = DOMPurify.sanitize(marked.parse(markdownText || ''));
+        body.innerHTML = DOMPurify.sanitize(marked.parse(text || ''));
       } else {
-        textEl.textContent = markdownText || '';
+        body.textContent = text || '';
       }
-      textEl.querySelectorAll('pre code').forEach(block => {
+      body.querySelectorAll('pre code').forEach(block => {
         if (window.hljs) hljs.highlightElement(block);
       });
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
   }
 
-  window.copyChatRaw = function(btn) {
-    const box = btn.closest('.chat-ai-box');
-    const raw = box ? box.getAttribute('data-raw-markdown') : '';
+  window.copyAiMessage = function(btn) {
+    const wrapper = btn.closest('.ai-wrapper');
+    const raw = wrapper ? wrapper.getAttribute('data-raw') : '';
     if (raw) {
       navigator.clipboard.writeText(raw).then(() => {
         btn.textContent = 'Copied!';
@@ -1775,193 +1203,27 @@ GrapeRoot Dual-Graph Status:
     }
   };
 
-  // Graph Explorer Tab
-  async function loadGraphNodes(kind = 'all') {
-    const list = document.getElementById('nodeList');
-    list.innerHTML = `
-      <div class="spinner-box">
-        <div class="css-spinner"></div>
-        <span>Loading graph nodes from info_graph.json...</span>
-      </div>`;
-
-    try {
-      const res = await fetch(`/api/graph/nodes?kind=${kind}&limit=40`);
-      const data = await res.json();
-      renderNodes(data.nodes || []);
-    } catch (e) {
-      list.innerHTML = `
-        <div style="padding:16px;text-align:center;color:var(--muted);font-size:12px;">
-          GrapeRoot MCP not connected. Run <code style="color:var(--emerald);">graperoot . --antigravity</code> to index your project.
-        </div>`;
-    }
-  }
-
-  function renderNodes(nodes) {
-    const list = document.getElementById('nodeList');
-    list.innerHTML = '';
-    if (!nodes || nodes.length === 0) {
-      list.innerHTML = `
-        <div style="padding:16px;text-align:center;color:var(--muted);font-size:12px;">
-          No matching graph nodes found. Run <code style="color:var(--emerald);">graperoot . --antigravity</code> to build graph.
-        </div>`;
-      return;
-    }
-    nodes.forEach(n => {
-      const card = document.createElement('div');
-      card.className = 'node-card';
-      const kws = (n.keywords || []).slice(0, 4).map(k => `<span class="kw-tag">${escapeHtml(k)}</span>`).join('');
-      card.innerHTML = `
-        <div class="node-card-top">
-          <span class="node-id">${escapeHtml(n.id || n.path)}</span>
-          <span class="node-kind-badge">${escapeHtml(n.kind || 'node')}</span>
-        </div>
-        <div class="node-summary">${escapeHtml(n.summary || n.name || n.path)}</div>
-        ${kws ? `<div class="node-keywords">${kws}</div>` : ''}
-      `;
-      card.onclick = () => openCodeView(n.id || n.path);
-      list.appendChild(card);
-    });
-  }
-
-  async function runGraphSearch() {
-    const q = document.getElementById('graphSearchInput').value.trim();
-    if (!q) return loadGraphNodes();
-    const list = document.getElementById('nodeList');
-    list.innerHTML = `
-      <div class="spinner-box">
-        <div class="css-spinner"></div>
-        <span>Querying GrapeRoot graph_retrieve...</span>
-      </div>`;
-
-    try {
-      const res = await fetch('/api/graph/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: q })
-      });
-      const data = await res.json();
-      const nodes = data.result?.nodes || data.result?.files || [];
-      const normalized = Array.isArray(nodes) ? nodes.map(item => typeof item === 'string' ? { id: item, path: item, summary: 'Matched node' } : item) : [];
-      renderNodes(normalized);
-    } catch (e) {
-      list.innerHTML = `<div style="color:var(--red);font-size:11.5px;padding:12px;">Search error: ${escapeHtml(e.message)}</div>`;
-    }
-  }
-
-  async function openCodeView(filePath) {
-    const drawer = document.getElementById('codeViewer');
-    const title = document.getElementById('codeViewerTitle');
-    const content = document.getElementById('codeViewerContent');
-    drawer.style.display = 'block';
-    title.textContent = filePath;
-    content.textContent = 'Calling graph_read...';
-
-    try {
-      const res = await fetch('/api/graph/read', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file: filePath })
-      });
-      const data = await res.json();
-      content.textContent = data.result?.content || JSON.stringify(data.result, null, 2);
-      if (window.hljs) hljs.highlightElement(content);
-    } catch (e) {
-      content.textContent = 'Error reading file: ' + e.message;
-    }
-  }
-
-  // Memory Tab
-  async function loadMemory() {
-    try {
-      const res = await fetch('/api/memory');
-      memoryData = await res.json();
-      renderMemory(memoryData);
-    } catch (e) {}
-  }
-
-  function renderMemory(list) {
-    const container = document.getElementById('memoryList');
-    container.innerHTML = '';
-    if (!list || list.length === 0) {
-      container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:12px;">No memories recorded in context-store.json</div>';
-      return;
-    }
-    list.forEach(m => {
-      const card = document.createElement('div');
-      card.className = 'memory-card';
-      card.innerHTML = `
-        <div class="mem-header">
-          <span class="mem-type-badge ${escapeHtml(m.type || 'fact')}">${escapeHtml(m.type || 'fact')}</span>
-          <span class="mem-date">${escapeHtml(m.date || 'today')}</span>
-        </div>
-        <div class="mem-content">${escapeHtml(m.content)}</div>
-      `;
-      container.appendChild(card);
-    });
-  }
-
-  function filterMemory(type, btn) {
-    document.querySelectorAll('.mem-filter-btn').forEach(b => b.classList.remove('active'));
-    if (btn) btn.classList.add('active');
-    if (type === 'all') {
-      renderMemory(memoryData);
-    } else {
-      renderMemory(memoryData.filter(m => m.type === type));
-    }
-  }
-
-  function toggleAddMemoryForm() {
-    const form = document.getElementById('addMemoryForm');
-    const isHidden = form.style.display === 'none' || !form.style.display;
-    form.style.display = isHidden ? 'flex' : 'none';
-    if (isHidden) document.getElementById('memContentInput').focus();
-  }
-
-  async function submitAddMemory() {
-    const content = document.getElementById('memContentInput').value.trim();
-    const type = document.getElementById('memTypeSelect').value;
-    if (!content) return;
-
-    await fetch('/api/memory', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, content })
-    });
-
-    document.getElementById('memContentInput').value = '';
-    toggleAddMemoryForm();
-    loadMemory();
-  }
-
-  // Stats / Tool Calls Tab
-  async function loadToolCalls() {
-    try {
-      const res = await fetch('/api/tool-calls');
-      const calls = await res.json();
-      const container = document.getElementById('toolCallsList');
-      container.innerHTML = '';
-      if (!calls || calls.length === 0) {
-        container.innerHTML = '<div style="color:var(--muted);font-size:11px;padding:8px 0;">No tool calls logged yet</div>';
-        return;
-      }
-      calls.slice(0, 25).forEach(c => {
-        const row = document.createElement('div');
-        row.className = 'log-row';
-        row.innerHTML = `
-          <span class="log-tool">● ${escapeHtml(c.tool || 'tool')}</span>
-          <span class="log-time">${new Date(c.timestamp || Date.now()).toLocaleTimeString()}</span>
-        `;
-        container.appendChild(row);
-      });
-    } catch (e) {}
-  }
-
-  // Session Manager
+  // Sessions Management
   function startNewSession() {
     currentSessionId = 'session_' + Date.now();
-    terminalOutput.innerHTML = '';
-    chatMessages.innerHTML = '';
-    initBanner();
+    chatMessages.innerHTML = `
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">🍇</div>
+        <div class="empty-title">GrapeRoot Dual-Graph Chat</div>
+        <div class="empty-subtitle">Pre-loaded codebase context. Zero blind exploration turns.</div>
+        <div class="suggestions-grid">
+          <div class="suggestion-card" onclick="useSuggestion('Explain the architecture of this project')">
+            <div class="suggestion-text">"Explain the architecture of this project"</div>
+          </div>
+          <div class="suggestion-card" onclick="useSuggestion('Find and fix any bugs in server.js')">
+            <div class="suggestion-text">"Find and fix any bugs in server.js"</div>
+          </div>
+          <div class="suggestion-card" onclick="useSuggestion('Add a new feature to...')">
+            <div class="suggestion-text">"Add a new feature to..."</div>
+          </div>
+        </div>
+      </div>
+    `;
     loadSessions();
   }
 
@@ -1976,32 +1238,266 @@ GrapeRoot Dual-Graph Status:
   function renderSessionList() {
     sessionList.innerHTML = '';
     if (!sessions || sessions.length === 0) {
-      sessionList.innerHTML = '<div style="padding:10px;font-size:11.5px;color:var(--muted);">No past sessions</div>';
+      sessionList.innerHTML = '<div style="padding:10px;font-size:11.5px;color:var(--muted);">No past conversations</div>';
       return;
     }
     sessions.forEach(s => {
       const div = document.createElement('div');
       div.className = 'session-item' + (s.id === currentSessionId ? ' active' : '');
-      div.innerHTML = `<span class="session-title">${escapeHtml(s.title || 'Session')}</span>`;
+      div.innerHTML = `
+        <span class="session-title">${escapeHtml(s.title || 'Conversation')}</span>
+        <span class="session-time">${relativeTime(s.updatedAt)}</span>
+      `;
       div.onclick = () => { currentSessionId = s.id; renderSessionList(); };
       sessionList.appendChild(div);
     });
   }
 
-  async function saveSession() {
+  async function saveSession(firstMsg) {
     if (!currentSessionId) currentSessionId = 'session_' + Date.now();
-    const title = (commandHistory[commandHistory.length - 1] || 'GrapeRoot Session').slice(0, 60);
+    const title = (firstMsg || 'GrapeRoot Conversation').slice(0, 60);
     try {
       await fetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: currentSessionId,
-          title: title
-        })
+        body: JSON.stringify({ id: currentSessionId, title })
       });
       loadSessions();
     } catch (e) {}
+  }
+
+  // Graph Explorer Functions
+  async function loadGraphNodes() {
+    const cont = document.getElementById('nodesContainer');
+    cont.innerHTML = '<div style="padding:12px;color:var(--muted);font-size:11.5px;">Loading graph nodes...</div>';
+    try {
+      const res = await fetch('/api/graph/nodes?limit=30');
+      const data = await res.json();
+      renderNodes(data.nodes || []);
+    } catch (e) {
+      cont.innerHTML = '<div style="padding:12px;color:var(--muted);font-size:11.5px;">GrapeRoot MCP not connected. Run <code>graperoot . --antigravity</code> to index your project.</div>';
+    }
+  }
+
+  function renderNodes(nodes) {
+    const cont = document.getElementById('nodesContainer');
+    cont.innerHTML = '';
+    if (!nodes || nodes.length === 0) {
+      cont.innerHTML = '<div style="padding:12px;color:var(--muted);font-size:11.5px;">No graph data. Run <code>graperoot . --antigravity</code> to index.</div>';
+      return;
+    }
+    nodes.forEach(n => {
+      const card = document.createElement('div');
+      card.className = 'node-item';
+      card.innerHTML = `
+        <div class="node-title">${escapeHtml(n.id || n.path)}</div>
+        <div class="node-desc">${escapeHtml(n.summary || n.name || n.path)}</div>
+      `;
+      card.onclick = () => viewCode(n.id || n.path);
+      cont.appendChild(card);
+    });
+  }
+
+  async function runGraphSearch() {
+    const q = document.getElementById('graphSearchInput').value.trim();
+    if (!q) return loadGraphNodes();
+    const cont = document.getElementById('nodesContainer');
+    cont.innerHTML = '<div style="padding:12px;color:var(--muted);font-size:11.5px;">Searching graph...</div>';
+    try {
+      const res = await fetch('/api/graph/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: q })
+      });
+      const data = await res.json();
+      const nodes = data.result?.nodes || data.result?.files || [];
+      const normalized = Array.isArray(nodes) ? nodes.map(item => typeof item === 'string' ? { id: item, path: item, summary: 'Matched graph node' } : item) : [];
+      renderNodes(normalized);
+    } catch (e) {
+      cont.innerHTML = `<div style="color:var(--red);font-size:11px;padding:12px;">Search error: ${escapeHtml(e.message)}</div>`;
+    }
+  }
+
+  async function viewCode(file) {
+    const drawer = document.getElementById('codeDrawer');
+    const title = document.getElementById('codeDrawerTitle');
+    const code = document.getElementById('codeDrawerContent');
+    drawer.style.display = 'block';
+    title.textContent = file;
+    code.textContent = 'Calling graph_read...';
+
+    try {
+      const res = await fetch('/api/graph/read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file })
+      });
+      const data = await res.json();
+      code.textContent = data.result?.content || JSON.stringify(data.result, null, 2);
+      if (window.hljs) hljs.highlightElement(code);
+    } catch (e) {
+      code.textContent = 'Error: ' + e.message;
+    }
+  }
+
+  // Memory Tab Functions
+  async function loadMemory() {
+    try {
+      const res = await fetch('/api/memory');
+      memoryData = await res.json();
+      renderMemory(memoryData);
+    } catch (e) {}
+  }
+
+  function renderMemory(list) {
+    const cont = document.getElementById('memoryContainer');
+    cont.innerHTML = '';
+    if (!list || list.length === 0) {
+      cont.innerHTML = '<div style="padding:12px;color:var(--muted);font-size:11.5px;">No memories in context-store.json</div>';
+      return;
+    }
+    list.forEach(m => {
+      const div = document.createElement('div');
+      div.className = 'memory-item';
+      div.innerHTML = `
+        <span class="mem-tag ${escapeHtml(m.type || 'fact')}">${escapeHtml(m.type || 'fact')}</span>
+        <span style="font-size:12px;color:var(--text);">${escapeHtml(m.content)}</span>
+      `;
+      cont.appendChild(div);
+    });
+  }
+
+  function filterMem(type, btn) {
+    document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    if (type === 'all') renderMemory(memoryData);
+    else renderMemory(memoryData.filter(m => m.type === type));
+  }
+
+  function toggleAddMemoryForm() {
+    const form = document.getElementById('addMemForm');
+    const isHidden = form.style.display === 'none' || !form.style.display;
+    form.style.display = isHidden ? 'flex' : 'none';
+  }
+
+  async function submitMemory() {
+    const content = document.getElementById('memContent').value.trim();
+    const type = document.getElementById('memType').value;
+    if (!content) return;
+
+    await fetch('/api/memory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, content })
+    });
+
+    document.getElementById('memContent').value = '';
+    toggleAddMemoryForm();
+    loadMemory();
+  }
+
+  // Stats / Tool Log Functions
+  async function loadToolCalls() {
+    try {
+      const res = await fetch('/api/tool-calls');
+      const calls = await res.json();
+      const cont = document.getElementById('toolCallLogs');
+      cont.innerHTML = '';
+      if (!calls || calls.length === 0) {
+        cont.innerHTML = '<div style="color:var(--muted);font-size:11px;">No tool logs recorded yet</div>';
+        return;
+      }
+      calls.slice(0, 15).forEach(c => {
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.justifyContent = 'space-between';
+        row.innerHTML = `<span style="color:var(--cyan);">● ${escapeHtml(c.tool)}</span><span style="color:var(--muted);font-size:10px;">${new Date(c.timestamp).toLocaleTimeString()}</span>`;
+        cont.appendChild(row);
+      });
+    } catch (e) {}
+  }
+
+  // Terminal & Slash Commands
+  function handleTerminalCommand(cmd) {
+    printTerm(`> ${cmd}`);
+    if (cmd.startsWith('/')) {
+      const parts = cmd.slice(1).split(' ');
+      const action = parts[0].toLowerCase();
+      const arg = parts.slice(1).join(' ').trim();
+
+      switch (action) {
+        case 'help':
+          printTerm('Commands: /help, /scan, /read <file>, /search <query>, /bash <cmd>, /memory, /remember <text>, /status, /clear, /new');
+          break;
+        case 'clear':
+          termLogs.innerHTML = '';
+          break;
+        case 'scan':
+          fetch('/mcp-tool', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({tool:'graph_scan', args:{project_root:'.'}}) })
+            .then(r => r.json()).then(d => printTerm('✅ graph_scan complete'));
+          break;
+        case 'read':
+          viewCode(arg);
+          break;
+        case 'search':
+          document.getElementById('graphSearchInput').value = arg;
+          runGraphSearch();
+          break;
+        case 'bash':
+          executeBashStream(arg);
+          break;
+        case 'new':
+          startNewSession();
+          break;
+        case 'status':
+          fetchStatus();
+          break;
+        default:
+          printTerm(`Unknown command /${action}`);
+      }
+      return;
+    }
+    useSuggestion(cmd);
+  }
+
+  function printTerm(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    termLogs.appendChild(div);
+    termLogs.scrollTop = termLogs.scrollHeight;
+  }
+
+  function appendTerminalToolBlock(name, args) {
+    const block = document.createElement('div');
+    block.className = 't-block';
+    block.innerHTML = `
+      <div class="t-head" onclick="this.parentElement.classList.toggle('expanded')">
+        <span style="color:var(--cyan);">● ${escapeHtml(name)}</span>
+        <span style="font-size:10px;color:var(--green);">done</span>
+      </div>
+      <div class="t-body"><pre><code>${escapeHtml(JSON.stringify(args, null, 2))}</code></pre></div>
+    `;
+    termLogs.appendChild(block);
+    termLogs.scrollTop = termLogs.scrollHeight;
+  }
+
+  async function executeBashStream(command) {
+    const res = await fetch('/bash', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({command}) });
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      const text = decoder.decode(value);
+      for (const line of text.split('\n')) {
+        if (line.startsWith('data:')) {
+          try {
+            const d = JSON.parse(line.slice(5));
+            if (d.text) printTerm(d.text);
+          } catch(e) {}
+        }
+      }
+    }
   }
 
   function escapeHtml(str) {

@@ -1,5 +1,11 @@
 [
   {
+    "id": "session_1787945839020",
+    "title": "/model",
+    "updatedAt": "2026-08-28T19:37:19.024Z",
+    "createdAt": "2026-08-28T19:37:19.024Z"
+  },
+  {
     "id": "test-sess",
     "title": "Audit Test Session with a very long title that exceeds sixty",
     "updatedAt": "2026-08-28T19:34:06.100Z",
@@ -7,9 +13,9 @@
   },
   {
     "id": "session_1787944871064",
-    "title": "hey build a siuu button app on my pc",
+    "title": "yo",
     "createdAt": "2026-08-28T19:21:13.444Z",
-    "updatedAt": "2026-08-28T19:23:32.451Z"
+    "updatedAt": "2026-08-28T19:38:08.000Z"
   },
   {
     "id": "session_1787944698041",

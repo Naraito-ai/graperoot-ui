@@ -1,7 +1,7 @@
 {
   "name": "graperoot-ui",
-  "version": "1.2.0",
-  "description": "GrapeRoot Antigravity CLI Browser UI & Dual-Graph Context Engine",
+  "version": "2.0.0",
+  "description": "Claude.ai-quality UI for GrapeRoot Dual-Graph Context Engine and Local AI CLIs",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -15,12 +15,14 @@
   },
   "keywords": [
     "graperoot",
+    "claude",
     "antigravity",
+    "gemini",
+    "codex",
     "dual-graph",
     "mcp",
-    "terminal",
-    "gemini"
+    "chat-ui"
   ],
-  "author": "GrapeRoot",
+  "author": "GrapeRoot Community",
   "license": "MIT"
 }

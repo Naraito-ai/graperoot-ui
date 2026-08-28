@@ -6,11 +6,11 @@ const axios = require("axios");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
-const { spawn } = require("child_process");
+const { spawn, execSync } = require("child_process");
 
 const app = express();
 
-// Simplified, bulletproof PORT calculation (avoid 8080 collision with MCP)
+// Guard PORT against collision with GrapeRoot MCP on 8080
 let rawPort = parseInt(process.env.CHAT_PORT || process.env.PORT || "3000", 10);
 if (isNaN(rawPort) || rawPort === 8080) {
   console.warn("[GrapeRoot] Port 8080 is reserved for GrapeRoot MCP. Using 3000.");
@@ -20,7 +20,7 @@ const PORT = rawPort;
 const HOST = process.env.HOST || "0.0.0.0";
 const SESSIONS_FILE = path.join(__dirname, "sessions.json");
 
-// Helper to resolve .dual-graph directory cross-platform
+// Cross-platform helper to resolve .dual-graph directory
 function getDualGraphDir() {
   const localDir = path.join(process.cwd(), ".dual-graph");
   if (fs.existsSync(localDir)) return localDir;
@@ -29,7 +29,7 @@ function getDualGraphDir() {
   return localDir;
 }
 
-// Read MCP Port dynamically from mcp_port file
+// Read dynamic MCP port
 function getMcpPort() {
   const dgDir = getDualGraphDir();
   const portFile = path.join(dgDir, "mcp_port");
@@ -42,27 +42,72 @@ function getMcpPort() {
   return 8080;
 }
 
-// Locate agy executable across Windows, macOS, and Linux
-function findAgyBin() {
-  const isWin = process.platform === "win32";
-  const candidates = isWin
-    ? [
-        path.join(process.env.USERPROFILE || os.homedir(), "AppData", "Local", "agy", "bin", "agy.exe"),
-        path.join(process.env.LOCALAPPDATA || "", "agy", "bin", "agy.exe")
-      ]
-    : [
-        path.join(os.homedir(), ".local", "bin", "agy"),
-        "/usr/local/bin/agy",
-        "/usr/bin/agy",
-        "/opt/homebrew/bin/agy"
-      ];
+// Cross-platform detection of installed AI CLI tools
+function detectInstalledTools() {
+  const candidateTools = ["claude", "agy", "gemini", "codex", "opencode", "cursor"];
+  const detected = [];
 
-  for (const c of candidates) {
-    if (c && fs.existsSync(c)) return c;
+  for (const t of candidateTools) {
+    try {
+      const checkCmd = process.platform === "win32" ? `where ${t}` : `which ${t}`;
+      execSync(checkCmd, { stdio: "ignore" });
+      detected.push(t);
+      continue;
+    } catch (e) {}
+
+    // Fallback checks for common non-PATH locations
+    if (process.platform === "win32") {
+      const winPaths = [
+        path.join(process.env.USERPROFILE || os.homedir(), "AppData", "Local", t, "bin", `${t}.exe`),
+        path.join(process.env.LOCALAPPDATA || "", t, "bin", `${t}.exe`),
+        path.join(process.env.APPDATA || "", "npm", `${t}.cmd`)
+      ];
+      if (winPaths.some(p => fs.existsSync(p))) {
+        detected.push(t);
+        continue;
+      }
+    } else {
+      const unixPaths = [
+        path.join(os.homedir(), ".local", "bin", t),
+        `/usr/local/bin/${t}`,
+        `/usr/bin/${t}`,
+        `/opt/homebrew/bin/${t}`
+      ];
+      if (unixPaths.some(p => fs.existsSync(p))) {
+        detected.push(t);
+        continue;
+      }
+    }
   }
-  return "agy";
+
+  return detected.length > 0 ? detected : ["claude", "agy"];
 }
-const AGY_BIN = findAgyBin();
+
+// Resolve binary path for a tool
+function resolveToolBinary(toolName) {
+  const isWin = process.platform === "win32";
+  if (isWin) {
+    const specificPaths = [
+      path.join(process.env.USERPROFILE || os.homedir(), "AppData", "Local", toolName, "bin", `${toolName}.exe`),
+      path.join(process.env.LOCALAPPDATA || "", toolName, "bin", `${toolName}.exe`),
+      path.join(process.env.APPDATA || "", "npm", `${toolName}.cmd`)
+    ];
+    for (const p of specificPaths) {
+      if (fs.existsSync(p)) return p;
+    }
+  } else {
+    const unixPaths = [
+      path.join(os.homedir(), ".local", "bin", toolName),
+      `/usr/local/bin/${toolName}`,
+      `/usr/bin/${toolName}`,
+      `/opt/homebrew/bin/${toolName}`
+    ];
+    for (const p of unixPaths) {
+      if (fs.existsSync(p)) return p;
+    }
+  }
+  return toolName;
+}
 
 // Find Local Network IP (LAN)
 function getLanIp() {
@@ -78,35 +123,36 @@ function getLanIp() {
 }
 const LAN_IP = getLanIp();
 
-// Security Headers (CSP disabled to allow CDN script delivery)
+// Security Middlewares
 app.use(helmet({ contentSecurityPolicy: false }));
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  next();
+});
 app.use(cors({ origin: "*" }));
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(express.static(__dirname));
 
-// Serve index.html on root GET
+// Serve index.html
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
 /**
- * Universal MCP call helper for GrapeRoot FastMCP server using axios
+ * Universal MCP helper using axios
  */
 async function callMCP(tool, args = {}, timeoutMs = 8000) {
   const mcpPort = getMcpPort();
   const url = `http://127.0.0.1:${mcpPort}/mcp`;
 
   try {
-    const response = await axios.post(
+    const res = await axios.post(
       url,
       {
         jsonrpc: "2.0",
         method: "tools/call",
-        params: {
-          name: tool,
-          arguments: args
-        },
+        params: { name: tool, arguments: args },
         id: Date.now()
       },
       {
@@ -118,7 +164,7 @@ async function callMCP(tool, args = {}, timeoutMs = 8000) {
       }
     );
 
-    const data = response.data;
+    const data = res.data;
     if (data && data.result) {
       if (data.result.structuredContent) return data.result.structuredContent;
       if (data.result.content && Array.isArray(data.result.content) && data.result.content[0]?.text) {
@@ -130,14 +176,14 @@ async function callMCP(tool, args = {}, timeoutMs = 8000) {
       }
       return data.result;
     }
-  } catch (err) {
-    console.debug(`[MCP Error: ${tool}]`, err.message);
+  } catch (e) {
+    console.debug(`[MCP Error: ${tool}]`, e.message);
   }
   return null;
 }
 
 /**
- * Append entry to mcp_tool_calls.jsonl
+ * Log tool calls to mcp_tool_calls.jsonl
  */
 function logToolCall(toolName, payload) {
   try {
@@ -153,7 +199,7 @@ function logToolCall(toolName, payload) {
 }
 
 /**
- * Helper to read and auto-repair sessions.json
+ * Safe sessions.json reader with auto-repair
  */
 function readSessionsSafe() {
   if (!fs.existsSync(SESSIONS_FILE)) {
@@ -205,10 +251,10 @@ app.get("/api/status", async (req, res) => {
   }
 
   let graph = {
-    nodes: 48067,
-    edges: 66536,
-    files: 13603,
-    symbols: 34464,
+    nodes: 0,
+    edges: 0,
+    files: 0,
+    symbols: 0,
     root: process.cwd()
   };
 
@@ -216,50 +262,25 @@ app.get("/api/status", async (req, res) => {
   if (fs.existsSync(graphJsonFile)) {
     try {
       const g = JSON.parse(fs.readFileSync(graphJsonFile, "utf8"));
-      graph.nodes = g.node_count || (g.nodes ? g.nodes.length : graph.nodes);
-      graph.edges = g.edge_count || (g.edges ? g.edges.length : graph.edges);
-      graph.files = g.file_count || graph.files;
-      graph.symbols = g.symbol_count || graph.symbols;
+      graph.nodes = g.node_count || (g.nodes ? g.nodes.length : 0);
+      graph.edges = g.edge_count || (g.edges ? g.edges.length : 0);
+      graph.files = g.file_count || 0;
+      graph.symbols = g.symbol_count || 0;
       graph.root = g.root || process.cwd();
     } catch (e) {}
   }
 
+  const detectedTools = detectInstalledTools();
+
   res.json({
     mcp: mcpConnected,
     graph: graph,
-    model: "Gemini 3.7 Flash (High)",
-    user: "saivarshithuduthalaboina@gmail.com (Google AI Pro)",
-    version: "Antigravity CLI 1.1.21",
     mcpPort: mcpPort,
     lanIp: LAN_IP,
     port: PORT,
-    activeDrive: process.cwd().slice(0, 3) || "D:\\"
+    detectedTools: detectedTools,
+    activeRoot: process.cwd()
   });
-});
-
-/**
- * GET /api/graph/nodes
- */
-app.get("/api/graph/nodes", (req, res) => {
-  const kind = req.query.kind || "all";
-  const limit = parseInt(req.query.limit || "50", 10);
-  const dgDir = getDualGraphDir();
-  const graphJsonFile = path.join(dgDir, "info_graph.json");
-
-  if (fs.existsSync(graphJsonFile)) {
-    try {
-      const g = JSON.parse(fs.readFileSync(graphJsonFile, "utf8"));
-      let nodes = g.nodes || [];
-      if (kind !== "all") {
-        nodes = nodes.filter(n => n.kind === kind);
-      }
-      return res.json({
-        total: nodes.length,
-        nodes: nodes.slice(0, limit)
-      });
-    } catch (e) {}
-  }
-  res.json({ total: 0, nodes: [] });
 });
 
 /**
@@ -353,7 +374,7 @@ app.post("/mcp-tool", async (req, res) => {
 
 /**
  * POST /bash
- * WARNING: This endpoint executes arbitrary shell commands. For local use only.
+ * Cross-platform SSE streaming shell execution
  */
 app.post("/bash", (req, res) => {
   const { command } = req.body;
@@ -361,7 +382,7 @@ app.post("/bash", (req, res) => {
     return res.status(400).json({ error: "Command required" });
   }
   if (command.length > 2000) {
-    return res.status(400).json({ error: "Command too long (max 2000 characters)" });
+    return res.status(400).json({ error: "Command exceeds max length of 2000 characters" });
   }
 
   res.setHeader("Content-Type", "text/event-stream");
@@ -392,22 +413,6 @@ app.post("/bash", (req, res) => {
     res.write(`data: ${JSON.stringify({ type: "error", message: err.message })}\n\n`);
     res.end();
   });
-});
-
-/**
- * POST /api/log
- */
-app.post("/api/log", async (req, res) => {
-  const mcpPort = getMcpPort();
-  try {
-    const r = await axios.post(`http://127.0.0.1:${mcpPort}/log`, req.body, {
-      timeout: 3000,
-      headers: { "Content-Type": "application/json" }
-    });
-    res.json({ ok: r.status >= 200 && r.status < 300 });
-  } catch (e) {
-    res.json({ ok: false, error: e.message });
-  }
 });
 
 /**
@@ -453,21 +458,19 @@ app.post("/api/sessions", (req, res) => {
 
 /**
  * POST /chat
- * Main chat streaming endpoint implementing GrapeRoot Ground Truth Protocol
+ * Universal SSE streaming endpoint supporting Claude, Antigravity, Gemini, Codex, OpenCode
  */
 app.post("/chat", async (req, res) => {
-  const { message, model = "gemini-3.7-flash", history = [], sessionId } = req.body;
+  const { message, tool = "claude", history = [], sessionId } = req.body;
 
   if (!message) {
     return res.status(400).json({ error: "Message is required" });
   }
 
-  // Validate sessionId if provided
   if (sessionId && (typeof sessionId !== "string" || !/^[a-zA-Z0-9_-]{1,64}$/.test(sessionId))) {
     return res.status(400).json({ error: "Invalid sessionId" });
   }
 
-  // Set SSE Headers
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache, no-transform");
   res.setHeader("Connection", "keep-alive");
@@ -477,7 +480,7 @@ app.post("/chat", async (req, res) => {
   const startTime = Date.now();
 
   try {
-    // 1. Mandatory Protocol: Call graph_continue first
+    // 1. Mandatory GrapeRoot Protocol: Query graph_continue first
     res.write(`data: ${JSON.stringify({
       type: "tool_start",
       data: { name: "graph_continue", args: { query: message }, timestamp: new Date().toISOString() }
@@ -509,7 +512,7 @@ app.post("/chat", async (req, res) => {
       data: { files: recFiles, confidence, mode }
     })}\n\n`);
 
-    // 2. Read recommended files/symbols (max 3)
+    // 2. Read recommended files/symbols via graph_read
     let codeSnippets = [];
     if (!cont?.skip && recFiles.length > 0) {
       for (const item of recFiles.slice(0, 3)) {
@@ -536,25 +539,40 @@ app.post("/chat", async (req, res) => {
       }
     }
 
-    // 3. Build Prompt with Context BEFORE the user message
+    // 3. Build Prompt with GrapeRoot Context prepended
     let contextHeader = `[GrapeRoot Dual-Graph Context | Confidence: ${confidence}]\n`;
     if (codeSnippets.length > 0) {
       contextHeader += codeSnippets.join("\n\n") + "\n\n";
     }
-    const fullPrompt = `${contextHeader}\n\n${message}`;
+    const fullPrompt = `${contextHeader}\n\nUser: ${message}`;
 
-    // 4. Spawn Google Antigravity CLI
-    const agyArgs = [
-      "-p", fullPrompt,
-      "--output-format", "stream-json",
-      "--dangerously-skip-permissions"
-    ];
+    // 4. Determine AI CLI arguments according to tool selected
+    const binPath = resolveToolBinary(tool);
+    let cliArgs = [];
 
-    if (model.includes("pro")) {
-      agyArgs.push("--effort", "high");
+    switch (tool.toLowerCase()) {
+      case "claude":
+        cliArgs = ["-p", fullPrompt, "--output-format", "stream-json", "--dangerously-skip-permissions"];
+        break;
+      case "agy":
+      case "antigravity":
+        cliArgs = ["-p", fullPrompt, "--output-format", "stream-json", "--dangerously-skip-permissions"];
+        break;
+      case "gemini":
+        cliArgs = ["-p", fullPrompt, "--output-format", "stream-json"];
+        break;
+      case "codex":
+        cliArgs = ["chat", fullPrompt];
+        break;
+      case "opencode":
+        cliArgs = ["run", fullPrompt];
+        break;
+      default:
+        cliArgs = ["-p", fullPrompt, "--output-format", "stream-json", "--dangerously-skip-permissions"];
+        break;
     }
 
-    const child = spawn(AGY_BIN, agyArgs, {
+    const child = spawn(binPath, cliArgs, {
       cwd: process.cwd(),
       shell: false,
       env: process.env
@@ -570,6 +588,8 @@ app.post("/chat", async (req, res) => {
       for (const line of lines) {
         const trimmed = line.trim();
         if (!trimmed) continue;
+
+        // Attempt stream-json event parsing
         try {
           const data = JSON.parse(trimmed);
 
@@ -616,13 +636,24 @@ app.post("/chat", async (req, res) => {
                 tokens: r.usage?.total_tokens || 0
               }
             })}\n\n`);
+          } else if (data.text || data.content) {
+            res.write(`data: ${JSON.stringify({
+              type: "token",
+              data: { text: data.text || data.content }
+            })}\n\n`);
           }
-        } catch (e) {}
+        } catch (e) {
+          // If output is raw text stream rather than JSON
+          res.write(`data: ${JSON.stringify({
+            type: "token",
+            data: { text: trimmed + "\n" }
+          })}\n\n`);
+        }
       }
     });
 
     child.stderr.on("data", (errData) => {
-      console.error("agy stderr:", errData.toString("utf8"));
+      console.error(`[${tool} stderr]:`, errData.toString("utf8"));
     });
 
     child.on("close", (code) => {
@@ -632,7 +663,7 @@ app.post("/chat", async (req, res) => {
     });
 
     child.on("error", (err) => {
-      res.write(`data: ${JSON.stringify({ type: "error", data: { message: `Antigravity CLI error: ${err.message}` } })}\n\n`);
+      res.write(`data: ${JSON.stringify({ type: "error", data: { message: `${tool} error: ${err.message}` } })}\n\n`);
       res.write("data: [DONE]\n\n");
       res.end();
     });
@@ -669,11 +700,12 @@ process.on("SIGTERM", () => {
 // Start Express Server
 app.listen(PORT, HOST, () => {
   const mcpPort = getMcpPort();
+  const tools = detectInstalledTools();
   console.log(`=======================================================`);
-  console.log(` 🍇 GrapeRoot Antigravity UI Server Ready`);
+  console.log(` 🍇 GrapeRoot Universal AI UI Server Ready`);
   console.log(` 💻 Local:   http://localhost:${PORT}`);
   console.log(` 📱 Mobile:  http://${LAN_IP}:${PORT}`);
   console.log(` 🔌 GrapeRoot MCP Target: http://127.0.0.1:${mcpPort}/mcp`);
-  console.log(` ⚡ Google Antigravity Session: Active`);
+  console.log(` ⚡ Detected AI Tools: [ ${tools.join(", ")} ]`);
   console.log(`=======================================================`);
 });
