@@ -238,7 +238,7 @@ app.get("/api/status", async (req, res) => {
         id: 1
       },
       {
-        timeout: 1500,
+        timeout: 2000,
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json, text/event-stream"
@@ -247,7 +247,27 @@ app.get("/api/status", async (req, res) => {
     );
     mcpConnected = (r.status >= 200 && r.status < 300);
   } catch (e) {
-    mcpConnected = false;
+    try {
+      const r2 = await axios.post(
+        `http://localhost:${mcpPort}/mcp`,
+        {
+          jsonrpc: "2.0",
+          method: "tools/list",
+          params: {},
+          id: 1
+        },
+        {
+          timeout: 2000,
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json, text/event-stream"
+          }
+        }
+      );
+      mcpConnected = (r2.status >= 200 && r2.status < 300);
+    } catch (e2) {
+      mcpConnected = false;
+    }
   }
 
   let graph = {

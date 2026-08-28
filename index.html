@@ -612,7 +612,7 @@
         <span>🍇</span>
         <span>Grape<span class="brand-gradient">Root</span></span>
       </div>
-      <div class="status-pill" id="statusPill">
+      <div class="status-pill" id="statusPill" onclick="fetchStatus()" title="Click to refresh MCP connection" style="cursor:pointer;">
         <span class="status-dot" id="mcpDot"></span>
         <span id="statusPillText">Loading...</span>
       </div>
@@ -830,8 +830,13 @@
     loadMemory();
     loadToolCalls();
 
-    setupStatusPolling(10000);
-    setInterval(loadToolCalls, 10000);
+    setInterval(fetchStatus, 4000);
+    setInterval(loadToolCalls, 8000);
+
+    window.addEventListener('focus', () => fetchStatus());
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') fetchStatus();
+    });
 
     // Auto-resize chat textarea
     chatInput.addEventListener('input', () => {
@@ -944,10 +949,6 @@
       if (res.ok) {
         const d = await res.json();
         updateStatusView(d);
-        if (statusFailures > 0) {
-          statusFailures = 0;
-          setupStatusPolling(10000);
-        }
       } else {
         handleStatusFailure();
       }
@@ -956,18 +957,9 @@
     }
   }
 
-  function setupStatusPolling(interval) {
-    if (statusInterval) clearInterval(statusInterval);
-    statusInterval = setInterval(fetchStatus, interval);
-  }
-
   function handleStatusFailure() {
-    statusFailures++;
     document.getElementById('mcpDot').className = 'status-dot offline';
-    document.getElementById('statusPillText').textContent = 'MCP Offline';
-    if (statusFailures >= 3) {
-      setupStatusPolling(60000);
-    }
+    document.getElementById('statusPillText').textContent = 'MCP Offline (Click to retry)';
   }
 
   function updateStatusView(d) {
@@ -975,7 +967,7 @@
     dot.className = 'status-dot' + (d.mcp ? '' : ' offline');
 
     const totalNodes = d.graph?.nodes ? Number(d.graph.nodes).toLocaleString() : '0';
-    document.getElementById('statusPillText').textContent = d.mcp ? `${totalNodes} Graph Nodes` : 'MCP Offline';
+    document.getElementById('statusPillText').textContent = d.mcp ? `${totalNodes} Graph Nodes` : 'MCP Offline (Click to retry)';
 
     if (d.graph) {
       document.getElementById('sNodes').textContent = Number(d.graph.nodes || 0).toLocaleString();
