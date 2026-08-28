@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GrapeRoot UI — Antigravity Dual-Graph</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981'><path d='M12 2L14.4 8.6L21 11L14.4 13.4L12 20L9.6 13.4L3 11L9.6 8.6L12 2Z'/></svg>">
+  
+  <!-- Marked.js for Markdown -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Highlight.js for Syntax Highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface-2: #21262d;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --green: #39d353;
+      --yellow: #e3b341;
+      --cyan: #58a6ff;
+      --red: #f85149;
+      --purple: #8b5cf6;
+      --emerald: #10b981;
+      --font-mono: 'Cascadia Code', 'Fira Code', Consolas, Monaco, monospace;
+      --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      --sidebar-width: 250px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-ui);
+      background-color: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Navigation Header */
+    .top-header {
+      height: 48px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .brand-gradient {
+      background: linear-gradient(135deg, var(--emerald), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .dir-pill {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 6px;
+      color: var(--muted);
+    }
+
+    .header-center {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stats-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      color: #34d399;
+      font-family: var(--font-mono);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 6px var(--emerald);
+    }
+    .status-dot.offline { background: var(--red); box-shadow: 0 0 6px var(--red); }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .model-badge {
+      background: rgba(139, 92, 246, 0.12);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      color: #c4b5fd;
+      font-size: 11.5px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    .sidebar-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+    .sidebar-btn:hover { background: var(--surface-2); color: var(--text); }
+
+    /* App Body */
+    .app-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Sidebar (Session History) */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      flex-shrink: 0;
+      transition: transform 0.25s ease, width 0.25s ease;
+      z-index: 90;
+    }
+
+    .sidebar.collapsed {
+      transform: translateX(-100%);
+      width: 0;
+      position: absolute;
+    }
+
+    .sidebar-header {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .new-session-btn {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.15s;
+    }
+    .new-session-btn:hover { background: #30363d; border-color: var(--emerald); }
+
+    .session-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .session-item {
+      padding: 8px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2px;
+    }
+    .session-item:hover { background: var(--surface-2); color: var(--text); }
+    .session-item.active { background: var(--surface-2); color: var(--emerald); border-left: 2px solid var(--emerald); font-weight: 500; }
+
+    .session-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; margin-right: 6px; }
+
+    .sidebar-footer {
+      padding: 10px 12px;
+      border-top: 1px solid var(--border);
+      font-size: 10.5px;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    /* Main Panels Container */
+    .panels-container {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      width: 100%;
+    }
+
+    /* PANEL 1: TERMINAL EMULATOR */
+    .panel-terminal {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #080c10;
+      border-right: 1px solid var(--border);
+      min-width: 0;
+      position: relative;
+    }
+
+    .terminal-topbar {
+      height: 32px;
+      background: #0f141c;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .terminal-output {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 14px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .terminal-output::-webkit-scrollbar { width: 5px; }
+    .terminal-output::-webkit-scrollbar-thumb { background: #21262d; border-radius: 4px; }
+
+    .ascii-diamond {
+      color: var(--green);
+      font-weight: bold;
+      line-height: 1.15;
+      margin-bottom: 12px;
+    }
+
+    /* Terminal Tool Call Blocks */
+    .tool-block {
+      background: #121824;
+      border: 1px solid #232d3d;
+      border-radius: 6px;
+      margin: 6px 0;
+      overflow: hidden;
+    }
+
+    .tool-block-header {
+      padding: 6px 10px;
+      background: #171f2e;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      font-size: 11.5px;
+    }
+    .tool-block-header:hover { background: #1c2638; }
+
+    .tool-title { color: var(--cyan); font-weight: 600; }
+
+    .tool-tag {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    .tool-tag.running { background: rgba(227, 179, 65, 0.15); color: var(--yellow); }
+    .tool-tag.done { background: rgba(57, 211, 83, 0.15); color: var(--green); }
+    .tool-tag.error { background: rgba(248, 81, 73, 0.15); color: var(--red); }
+
+    .tool-output {
+      padding: 8px 10px;
+      background: #0a0e14;
+      font-size: 11.5px;
+      border-top: 1px solid #232d3d;
+      max-height: 240px;
+      overflow-y: auto;
+      display: none;
+      position: relative;
+    }
+    .tool-block.expanded .tool-output { display: block; }
+
+    .copy-tool-btn {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: var(--muted);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .copy-tool-btn:hover { color: white; background: rgba(255, 255, 255, 0.2); }
+
+    .term-thought {
+      color: var(--muted);
+      font-style: italic;
+      margin: 4px 0;
+      font-size: 11.5px;
+    }
+
+    .term-compact-bar {
+      text-align: center;
+      color: var(--yellow);
+      margin: 8px 0;
+      font-size: 11px;
+      border-top: 1px dashed var(--yellow);
+      padding-top: 3px;
+    }
+
+    .terminal-input-bar {
+      background: #0f141c;
+      border-top: 1px solid var(--border);
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .term-prompt { color: var(--emerald); font-family: var(--font-mono); font-weight: bold; }
+    .term-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+
+    /* PANEL 2: CHAT + GRAPH EXPLORER (TABS) */
+    .panel-explorer {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      min-width: 0;
+      position: relative;
+    }
+
+    .tabs-header {
+      height: 36px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+    }
+    .tab-btn:hover { background: var(--surface-2); color: var(--text); }
+    .tab-btn.active { background: var(--surface-2); color: var(--emerald); font-weight: 600; }
+
+    .tab-content {
+      flex: 1;
+      overflow-y: auto;
+      display: none;
+      flex-direction: column;
+    }
+    .tab-content.active { display: flex; }
+
+    /* TAB 1: CHAT */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .chat-row { display: flex; width: 100%; flex-direction: column; }
+    .chat-row.user { align-items: flex-end; }
+    .chat-row.assistant { align-items: flex-start; }
+
+    .chat-user-bubble {
+      background: #1f2937;
+      border: 1px solid #374151;
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 14px 14px 2px 14px;
+      max-width: 85%;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+
+    .chat-ai-box {
+      max-width: 95%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .chat-ai-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      color: var(--emerald);
+      font-weight: 600;
+    }
+
+    .chat-ai-avatar {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--emerald);
+    }
+
+    .chat-ai-text {
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: var(--text);
+    }
+    .chat-ai-text p { margin-bottom: 8px; }
+    .chat-ai-text p:last-child { margin-bottom: 0; }
+    .chat-ai-text code { font-family: var(--font-mono); background: #161b22; padding: 2px 5px; border-radius: 4px; color: #34d399; font-size: 12px; }
+    .chat-ai-text pre { background: #0d1117; border: 1px solid var(--border); border-radius: 6px; padding: 10px; margin: 8px 0; overflow-x: auto; }
+    .chat-ai-text pre code { background: transparent; padding: 0; color: #e6edf3; }
+
+    .graph-context-chip {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 6px;
+      padding: 5px 9px;
+      font-size: 11px;
+      color: #34d399;
+      font-family: var(--font-mono);
+      margin-bottom: 4px;
+    }
+
+    /* TAB 2: GRAPH EXPLORER */
+    .graph-pane {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      height: 100%;
+    }
+
+    .graph-search-bar {
+      display: flex;
+      gap: 8px;
+    }
+
+    .graph-search-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 7px 12px;
+      border-radius: 6px;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      outline: none;
+    }
+    .graph-search-input:focus { border-color: var(--emerald); }
+
+    .btn-search {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--emerald);
+      padding: 7px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12.5px;
+      font-weight: 500;
+    }
+    .btn-search:hover { background: #30363d; }
+
+    .node-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .node-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .node-card:hover { border-color: var(--emerald); background: var(--surface-2); }
+
+    .node-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .node-id { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--cyan); }
+    .node-kind-badge { font-size: 10px; padding: 1px 6px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); color: var(--muted); }
+
+    .node-summary { font-size: 11.5px; color: var(--text); }
+    .node-keywords { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+    .kw-tag { font-size: 10px; background: rgba(139, 92, 246, 0.15); color: #c4b5fd; padding: 1px 5px; border-radius: 3px; font-family: var(--font-mono); }
+
+    /* Code Viewer Modal / Drawer */
+    .code-viewer-drawer {
+      background: #080c10;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      max-height: 280px;
+      overflow-y: auto;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      display: none;
+    }
+
+    /* TAB 3: STATS */
+    .stats-pane {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+    }
+
+    .stat-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 600; }
+    .stat-val { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--emerald); }
+
+    .tool-calls-table {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .log-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .log-tool { color: var(--cyan); font-weight: 600; }
+    .log-time { color: var(--muted); font-size: 10px; }
+
+    /* TAB 4: MEMORY */
+    .memory-pane {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+    }
+
+    .mem-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .mem-filter-tabs {
+      display: flex;
+      gap: 4px;
+    }
+
+    .mem-filter-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .mem-filter-btn.active { background: var(--surface-2); color: var(--emerald); border-color: var(--emerald); }
+
+    .btn-add-mem {
+      background: var(--emerald);
+      color: #042f2e;
+      border: none;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .memory-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .mem-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .mem-type-badge {
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 3px;
+    }
+    .mem-type-badge.decision { background: rgba(57, 211, 83, 0.15); color: var(--green); }
+    .mem-type-badge.task { background: rgba(88, 166, 255, 0.15); color: var(--cyan); }
+    .mem-type-badge.blocker { background: rgba(248, 81, 73, 0.15); color: var(--red); }
+    .mem-type-badge.fact { background: rgba(227, 179, 65, 0.15); color: var(--yellow); }
+    .mem-type-badge.next { background: rgba(139, 92, 246, 0.15); color: var(--purple); }
+
+    .mem-content { font-size: 13px; color: var(--text); }
+    .mem-date { font-size: 10px; color: var(--muted); font-family: var(--font-mono); }
+
+    /* Mobile Bottom Tabs */
+    .mobile-tab-bar {
+      display: none;
+      height: 48px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      grid-template-columns: repeat(4, 1fr);
+      z-index: 100;
+    }
+
+    .mob-tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      cursor: pointer;
+    }
+    .mob-tab-btn.active { color: var(--emerald); border-top: 2px solid var(--emerald); }
+
+    @media (max-width: 768px) {
+      .header-center { display: none; }
+      .panels-container { flex-direction: column; }
+      .mobile-tab-bar { display: grid; }
+      .panel-terminal, .panel-explorer { display: none; width: 100%; height: 100%; }
+      .panel-terminal.mobile-active, .panel-explorer.mobile-active { display: flex; }
+      .sidebar { position: absolute; left: 0; top: 0; bottom: 0; transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header Bar -->
+  <header class="top-header">
+    <div class="header-left">
+      <button class="sidebar-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+      </button>
+      <div class="brand-logo" onclick="startNewSession()">
+        <span>🍇</span>
+        <span>Grape<span class="brand-gradient">Root</span></span>
+      </div>
+      <span class="dir-pill" id="activeDriveBadge">D:\</span>
+    </div>
+
+    <div class="header-center">
+      <div class="stats-pill" id="statsPill">
+        <span class="status-dot" id="mcpDot"></span>
+        <span id="statsPillText">48,067 Nodes · 66,536 Edges · 13,603 Files</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="model-badge" id="activeModelBadge">Gemini 3.7 Flash (High)</div>
+    </div>
+  </header>
+
+  <!-- App Body -->
+  <div class="app-body">
+    <!-- Sidebar (Session List) -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <button class="new-session-btn" onclick="startNewSession()">
+          <span>+ New Session</span>
+          <span style="font-size:10px;opacity:0.6;">Ctrl+K</span>
+        </button>
+      </div>
+
+      <div class="session-list" id="sessionList"></div>
+
+      <div class="sidebar-footer">
+        <div style="color:var(--text);font-weight:600;" id="userBadge">saivarshithuduthalaboina@gmail.com</div>
+        <div style="font-family:var(--font-mono);font-size:10px;opacity:0.7;" id="versionBadge">Antigravity CLI 1.1.21</div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--cyan);" id="lanIpBadge">LAN: 10.114.175.98:3000</div>
+      </div>
+    </aside>
+
+    <!-- Two Main Panels -->
+    <div class="panels-container">
+      <!-- PANEL 1: Terminal Emulator (Left) -->
+      <section class="panel-terminal mobile-active" id="panelTerminal">
+        <div class="terminal-topbar">
+          <span>TERMINAL · (Ctrl+O to expand tools)</span>
+          <span id="termStatusBadge" style="color:var(--green);">READY</span>
+        </div>
+
+        <div class="terminal-output" id="terminalOutput"></div>
+
+        <div class="terminal-input-bar">
+          <span class="term-prompt">▸</span>
+          <input type="text" class="term-input" id="termInput" placeholder="Type prompt or /help, /scan, /read, /search, /bash..." autofocus autocomplete="off">
+        </div>
+      </section>
+
+      <!-- PANEL 2: Chat + Explorer Tabs (Right) -->
+      <section class="panel-explorer" id="panelExplorer">
+        <!-- Tabs Bar -->
+        <div class="tabs-header">
+          <button class="tab-btn active" onclick="switchExplorerTab('chat', this)">💬 Chat</button>
+          <button class="tab-btn" onclick="switchExplorerTab('graph', this)">🔍 Graph</button>
+          <button class="tab-btn" onclick="switchExplorerTab('stats', this)">📊 Stats</button>
+          <button class="tab-btn" onclick="switchExplorerTab('memory', this)">🧠 Memory</button>
+        </div>
+
+        <!-- TAB 1: Chat -->
+        <div class="tab-content active" id="tabChat">
+          <div class="chat-messages" id="chatMessages">
+            <div style="text-align:center;padding:30px 10px;color:var(--muted);">
+              <div style="font-size:28px;margin-bottom:6px;">🍇</div>
+              <h3 style="color:var(--text);margin-bottom:2px;">GrapeRoot Dual-Graph Chat</h3>
+              <p style="font-size:12.5px;">Direct transcript connected to Google Antigravity</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: Graph Explorer -->
+        <div class="tab-content" id="tabGraph">
+          <div class="graph-pane">
+            <div class="graph-search-bar">
+              <input type="text" class="graph-search-input" id="graphSearchInput" placeholder="Search symbol, function, or file...">
+              <button class="btn-search" onclick="runGraphSearch()">Search</button>
+            </div>
+
+            <div class="code-viewer-drawer" id="codeViewer">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span id="codeViewerTitle" style="color:var(--cyan);font-weight:600;"></span>
+                <button onclick="document.getElementById('codeViewer').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;">✕</button>
+              </div>
+              <pre><code id="codeViewerContent"></code></pre>
+            </div>
+
+            <div class="node-list" id="nodeList"></div>
+          </div>
+        </div>
+
+        <!-- TAB 3: Stats -->
+        <div class="tab-content" id="tabStats">
+          <div class="stats-pane">
+            <div class="stats-grid">
+              <div class="stat-box">
+                <span class="stat-label">Graph Nodes</span>
+                <span class="stat-val" id="statNodes">48,067</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-label">Graph Edges</span>
+                <span class="stat-val" id="statEdges">66,536</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-label">Indexed Files</span>
+                <span class="stat-val" id="statFiles">13,603</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-label">Symbols</span>
+                <span class="stat-val" id="statSymbols">34,464</span>
+              </div>
+            </div>
+
+            <div class="tool-calls-table">
+              <span style="font-size:12px;font-weight:600;color:var(--text);">Recent Tool Invocations (mcp_tool_calls.jsonl)</span>
+              <div id="toolCallsList" style="display:flex;flex-direction:column;gap:4px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: Memory -->
+        <div class="tab-content" id="tabMemory">
+          <div class="memory-pane">
+            <div class="mem-topbar">
+              <div class="mem-filter-tabs">
+                <button class="mem-filter-btn active" onclick="filterMemory('all', this)">All</button>
+                <button class="mem-filter-btn" onclick="filterMemory('decision', this)">Decision</button>
+                <button class="mem-filter-btn" onclick="filterMemory('task', this)">Task</button>
+                <button class="mem-filter-btn" onclick="filterMemory('fact', this)">Fact</button>
+                <button class="mem-filter-btn" onclick="filterMemory('blocker', this)">Blocker</button>
+              </div>
+              <button class="btn-add-mem" onclick="promptAddMemory()">+ Add Memory</button>
+            </div>
+
+            <div id="memoryList" style="display:flex;flex-direction:column;gap:8px;"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Mobile Bottom Tab Bar -->
+  <nav class="mobile-tab-bar">
+    <button class="mob-tab-btn active" id="mTabTerm" onclick="switchMobileView('terminal')">⌨ Terminal</button>
+    <button class="mob-tab-btn" id="mTabChat" onclick="switchMobileView('chat')">💬 Chat</button>
+    <button class="mob-tab-btn" id="mTabGraph" onclick="switchMobileView('graph')">🔍 Graph</button>
+    <button class="mob-tab-btn" id="mTabMem" onclick="switchMobileView('memory')">🧠 Memory</button>
+  </nav>
+
+<script>
+  let currentSessionId = null;
+  let sessions = [];
+  let commandHistory = [];
+  let historyIndex = -1;
+  let isGenerating = false;
+  let currentModel = 'gemini-3.7-flash';
+  let memoryData = [];
+
+  const terminalOutput = document.getElementById('terminalOutput');
+  const termInput = document.getElementById('termInput');
+  const chatMessages = document.getElementById('chatMessages');
+  const sessionList = document.getElementById('sessionList');
+  const sidebar = document.getElementById('sidebar');
+
+  // Exact GrapeRoot Diamond ASCII Banner
+  const DIAMOND_BANNER = 
+`    ▄▀▀▄        Antigravity CLI 1.1.21
+   ▀▀▀▀▀▀       saivarshithuduthalaboina@gmail.com (Google AI Pro)
+  ▀▀▀▀▀▀▀▀      Gemini 3.7 Flash (High)
+ ▄▀▀    ▀▀▄     D:\\
+▄▀▀      ▀▀▄    GrapeRoot Dual-Graph Engine Active\n`;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    printDiamondBanner();
+    loadSessions();
+    fetchStatus();
+    loadGraphNodes();
+    loadMemory();
+    loadToolCalls();
+
+    setInterval(fetchStatus, 10000);
+    setInterval(loadToolCalls, 10000);
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        startNewSession();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') {
+        e.preventDefault();
+        toggleAllToolBlocks();
+      }
+    });
+
+    // Terminal Input Handling
+    termInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const val = termInput.value.trim();
+        if (val) {
+          commandHistory.push(val);
+          historyIndex = commandHistory.length;
+          termInput.value = '';
+          handleCommand(val);
+        }
+      } else if (e.key === 'ArrowUp') {
+        if (historyIndex > 0) {
+          historyIndex--;
+          termInput.value = commandHistory[historyIndex] || '';
+        }
+      } else if (e.key === 'ArrowDown') {
+        if (historyIndex < commandHistory.length - 1) {
+          historyIndex++;
+          termInput.value = commandHistory[historyIndex] || '';
+        } else {
+          historyIndex = commandHistory.length;
+          termInput.value = '';
+        }
+      }
+    });
+
+    // Graph search on Enter
+    document.getElementById('graphSearchInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') runGraphSearch();
+    });
+
+    // Mobile Keyboard insets
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => {
+        document.body.style.height = `${window.visualViewport.height}px`;
+      });
+    }
+  });
+
+  function printDiamondBanner() {
+    const div = document.createElement('div');
+    div.className = 'ascii-diamond';
+    div.textContent = DIAMOND_BANNER;
+    terminalOutput.appendChild(div);
+    printTermLine('Ready. Type a prompt or /help for all GrapeRoot commands.\n', '#8b949e');
+  }
+
+  function printTermLine(text, color = null) {
+    const span = document.createElement('div');
+    span.textContent = text;
+    if (color) span.style.color = color;
+    terminalOutput.appendChild(span);
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+  }
+
+  function toggleSidebar() {
+    sidebar.classList.toggle('open');
+    sidebar.classList.toggle('collapsed');
+  }
+
+  function switchExplorerTab(tabName, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+
+    const target = document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+    if (target) target.classList.add('active');
+
+    if (tabName === 'stats') loadToolCalls();
+    if (tabName === 'memory') loadMemory();
+  }
+
+  function switchMobileView(view) {
+    const termPanel = document.getElementById('panelTerminal');
+    const expPanel = document.getElementById('panelExplorer');
+    document.querySelectorAll('.mob-tab-btn').forEach(b => b.classList.remove('active'));
+
+    if (view === 'terminal') {
+      termPanel.classList.add('mobile-active');
+      expPanel.classList.remove('mobile-active');
+      document.getElementById('mTabTerm').classList.add('active');
+    } else {
+      termPanel.classList.remove('mobile-active');
+      expPanel.classList.add('mobile-active');
+      if (view === 'chat') {
+        switchExplorerTab('chat', document.querySelectorAll('.tab-btn')[0]);
+        document.getElementById('mTabChat').classList.add('active');
+      } else if (view === 'graph') {
+        switchExplorerTab('graph', document.querySelectorAll('.tab-btn')[1]);
+        document.getElementById('mTabGraph').classList.add('active');
+      } else if (view === 'memory') {
+        switchExplorerTab('memory', document.querySelectorAll('.tab-btn')[3]);
+        document.getElementById('mTabMem').classList.add('active');
+      }
+    }
+  }
+
+  async function fetchStatus() {
+    try {
+      const res = await fetch('/api/status');
+      const data = await res.json();
+      if (data.graph) {
+        document.getElementById('statsPillText').textContent = 
+          `${Number(data.graph.nodes).toLocaleString()} Nodes · ${Number(data.graph.edges).toLocaleString()} Edges · ${Number(data.graph.files).toLocaleString()} Files`;
+        document.getElementById('statNodes').textContent = Number(data.graph.nodes).toLocaleString();
+        document.getElementById('statEdges').textContent = Number(data.graph.edges).toLocaleString();
+        document.getElementById('statFiles').textContent = Number(data.graph.files).toLocaleString();
+        document.getElementById('statSymbols').textContent = Number(data.graph.symbols).toLocaleString();
+      }
+      document.getElementById('mcpDot').className = 'status-dot' + (data.mcp ? '' : ' offline');
+      if (data.lanIp) document.getElementById('lanIpBadge').textContent = `LAN: http://${data.lanIp}:${data.port || 3000}`;
+      if (data.activeDrive) document.getElementById('activeDriveBadge').textContent = data.activeDrive;
+    } catch (e) {}
+  }
+
+  function toggleAllToolBlocks() {
+    document.querySelectorAll('.tool-block').forEach(b => b.classList.toggle('expanded'));
+  }
+
+  // Handle Commands
+  async function handleCommand(cmd) {
+    printTermLine(`> ${cmd}`, '#e6edf3');
+    appendChatUser(cmd);
+
+    if (cmd.startsWith('/')) {
+      const parts = cmd.slice(1).split(' ');
+      const action = parts[0].toLowerCase();
+      const arg = parts.slice(1).join(' ').trim();
+
+      switch (action) {
+        case 'help':
+          printHelp();
+          break;
+        case 'clear':
+          terminalOutput.innerHTML = '';
+          printDiamondBanner();
+          break;
+        case 'status':
+          showStatusCmd();
+          break;
+        case 'scan':
+        case 'graph_scan':
+          runGraphScan();
+          break;
+        case 'read':
+          runGraphRead(arg);
+          break;
+        case 'search':
+          runSearchCmd(arg);
+          break;
+        case 'memory':
+          showMemoryCmd();
+          break;
+        case 'remember':
+          addMemoryCmd(arg);
+          break;
+        case 'bash':
+          runBashCmd(arg);
+          break;
+        case 'model':
+          switchModelCmd(arg);
+          break;
+        case 'history':
+          showHistoryCmd();
+          break;
+        case 'export':
+          exportSession();
+          break;
+        case 'new':
+          startNewSession();
+          break;
+        case 'compact':
+          triggerCompact();
+          break;
+        case 'stats':
+          showStatsCmd();
+          break;
+        default:
+          printTermLine(`Unknown command /${action}. Type /help for all commands.`, '#f85149');
+      }
+      return;
+    }
+
+    // Standard AI Prompt -> Antigravity
+    await sendPromptToAntigravity(cmd);
+  }
+
+  function printHelp() {
+    const help = `
+GrapeRoot Commands:
+  /help            Show this help menu
+  /clear           Clear terminal window
+  /status          Display Dual-Graph status & network URLs
+  /scan            Trigger graph_scan(project_root: "D:\\")
+  /read <file>     Call graph_read for file or symbol (e.g. /read bot.py::on_message)
+  /search <query>  Call graph_retrieve for semantic search
+  /memory          List context-store.json entries
+  /remember <txt>  Add fact to memory (graph_add_memory)
+  /bash <cmd>      Execute shell command locally
+  /model <name>    Switch active model (/model pro, /model flash)
+  /history         Show recent session commands
+  /export          Export session as JSON
+  /new             Start fresh session
+  /compact         Add compact divider
+  /stats           Display token stats & tool counts
+  <prompt>         Execute prompt via Google Antigravity session
+`;
+    printTermLine(help, '#58a6ff');
+  }
+
+  function showStatusCmd() {
+    fetch('/api/status').then(r => r.json()).then(d => {
+      printTermLine(`
+GrapeRoot Dual-Graph Status:
+  MCP Server    : ${d.mcp ? 'CONNECTED (port ' + d.mcpPort + ')' : 'DISCONNECTED'}
+  Graph Nodes   : ${d.graph?.nodes} nodes, ${d.graph?.edges} edges, ${d.graph?.files} files
+  Active Model  : ${d.model}
+  Active User   : ${d.user}
+  CLI Version   : ${d.version}
+  Local URL     : http://localhost:${d.port}
+  LAN Mobile    : http://${d.lanIp}:${d.port}
+`, '#39d353');
+    });
+  }
+
+  function triggerCompact() {
+    const div = document.createElement('div');
+    div.className = 'term-compact-bar';
+    div.textContent = '── Conversation compacted ──';
+    terminalOutput.appendChild(div);
+    printTermLine('Context successfully pruned into working memory.\n', '#e3b341');
+  }
+
+  async function runGraphScan() {
+    printTermLine('🍇 Running GrapeRoot graph_scan...', '#e3b341');
+    const toolEl = createToolBlock('graph_scan', { project_root: 'D:\\' });
+    try {
+      const res = await fetch('/mcp-tool', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tool: 'graph_scan', args: { project_root: 'D:\\' } })
+      });
+      const data = await res.json();
+      updateToolBlock(toolEl, 'done', JSON.stringify(data.result || data, null, 2));
+      await fetchStatus();
+      printTermLine('✅ graph_scan complete!', '#39d353');
+    } catch (e) {
+      updateToolBlock(toolEl, 'error', e.message);
+    }
+  }
+
+  async function runGraphRead(file) {
+    if (!file) {
+      printTermLine('Usage: /read <filepath or file::symbol>', '#f85149');
+      return;
+    }
+    printTermLine(`🍇 Calling graph_read("${file}")...`, '#58a6ff');
+    const toolEl = createToolBlock('graph_read', { file });
+    try {
+      const res = await fetch('/api/graph/read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file })
+      });
+      const data = await res.json();
+      const content = data.result?.content || JSON.stringify(data.result, null, 2);
+      updateToolBlock(toolEl, 'done', content);
+      printTermLine(`📄 Read ${file} (${content.length} chars)`, '#39d353');
+    } catch (e) {
+      updateToolBlock(toolEl, 'error', e.message);
+    }
+  }
+
+  async function runSearchCmd(query) {
+    if (!query) {
+      printTermLine('Usage: /search <query>', '#f85149');
+      return;
+    }
+    printTermLine(`🔍 Calling graph_retrieve("${query}")...`, '#58a6ff');
+    const toolEl = createToolBlock('graph_retrieve', { query });
+    try {
+      const res = await fetch('/api/graph/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
+      const data = await res.json();
+      updateToolBlock(toolEl, 'done', JSON.stringify(data.result, null, 2));
+    } catch (e) {
+      updateToolBlock(toolEl, 'error', e.message);
+    }
+  }
+
+  async function showMemoryCmd() {
+    const res = await fetch('/api/memory');
+    const list = await res.json();
+    printTermLine(`🧠 Context Store Memories (${list.length}):\n` + 
+      list.map(m => `  [${m.type.toUpperCase()}] ${m.content} (${m.date || 'today'})`).join('\n'), '#c4b5fd');
+  }
+
+  async function addMemoryCmd(text) {
+    if (!text) {
+      printTermLine('Usage: /remember <fact/task text>', '#f85149');
+      return;
+    }
+    const res = await fetch('/api/memory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'fact', content: text })
+    });
+    printTermLine(`✅ Added memory: "${text}"`, '#39d353');
+    loadMemory();
+  }
+
+  async function runBashCmd(command) {
+    if (!command) {
+      printTermLine('Usage: /bash <command>', '#f85149');
+      return;
+    }
+    const toolEl = createToolBlock('Bash', { command });
+    try {
+      const res = await fetch('/bash', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command })
+      });
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let full = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const text = dec.decode(value);
+        for (const line of text.split('\n')) {
+          if (line.startsWith('data:')) {
+            try {
+              const d = JSON.parse(line.slice(5).trim());
+              if (d.text) { full += d.text; appendToolOutput(toolEl, d.text); }
+            } catch (e) {}
+          }
+        }
+      }
+      updateToolBlock(toolEl, 'done', full);
+    } catch (e) {
+      updateToolBlock(toolEl, 'error', e.message);
+    }
+  }
+
+  function switchModelCmd(name) {
+    if (name.includes('pro')) {
+      currentModel = 'gemini-3.7-pro';
+      document.getElementById('activeModelBadge').textContent = 'Gemini 3.7 Pro (High)';
+    } else {
+      currentModel = 'gemini-3.7-flash';
+      document.getElementById('activeModelBadge').textContent = 'Gemini 3.7 Flash (High)';
+    }
+    printTermLine(`Active model: ${currentModel}`, '#39d353');
+  }
+
+  function showHistoryCmd() {
+    printTermLine('Session Commands:\n' + commandHistory.map((c, i) => `  ${i + 1}. ${c}`).join('\n'), '#8b949e');
+  }
+
+  function showStatsCmd() {
+    fetch('/mcp-tool', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tool: 'get_session_stats' })
+    }).then(r => r.json()).then(d => {
+      printTermLine('Session Stats: ' + JSON.stringify(d.result || d, null, 2), '#39d353');
+    }).catch(e => printTermLine('Stats: ' + e.message, '#f85149'));
+  }
+
+  function exportSession() {
+    const data = {
+      sessionId: currentSessionId,
+      exportedAt: new Date().toISOString(),
+      commands: commandHistory
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `graperoot-${Date.now()}.json`;
+    a.click();
+    printTermLine('✅ Exported session to JSON!', '#39d353');
+  }
+
+  // AI Prompt Execution Flow
+  async function sendPromptToAntigravity(promptText) {
+    if (isGenerating) return;
+    isGenerating = true;
+    document.getElementById('termStatusBadge').textContent = 'THINKING...';
+    document.getElementById('termStatusBadge').style.color = 'var(--yellow)';
+
+    const aiChatEl = appendChatAiPlaceholder();
+    let termAiText = '';
+    const aiSpan = document.createElement('div');
+    aiSpan.style.color = '#e6edf3';
+    terminalOutput.appendChild(aiSpan);
+
+    try {
+      const response = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: promptText,
+          model: currentModel,
+          sessionId: currentSessionId
+        })
+      });
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith('data:')) {
+            const dataStr = trimmed.slice(5).trim();
+            if (dataStr === '[DONE]') break;
+
+            try {
+              const data = JSON.parse(dataStr);
+
+              if (data.type === 'tool_start') {
+                createToolBlock(data.data.name, data.data.args);
+              } else if (data.type === 'tool_end') {
+                // tool finished
+              } else if (data.type === 'thought') {
+                const thoughtEl = document.createElement('div');
+                thoughtEl.className = 'term-thought';
+                thoughtEl.textContent = `▸ ${data.data.text}`;
+                terminalOutput.appendChild(thoughtEl);
+              } else if (data.type === 'graph_context') {
+                renderChatGraphContext(aiChatEl, data.data);
+              } else if (data.type === 'token') {
+                termAiText += data.data.text;
+                aiSpan.textContent = termAiText;
+                updateChatAiContent(aiChatEl, termAiText);
+                terminalOutput.scrollTop = terminalOutput.scrollHeight;
+              }
+            } catch (e) {}
+          }
+        }
+      }
+    } catch (e) {
+      printTermLine(`⚠️ Error: ${e.message}`, '#f85149');
+    } finally {
+      isGenerating = false;
+      document.getElementById('termStatusBadge').textContent = 'READY';
+      document.getElementById('termStatusBadge').style.color = 'var(--green)';
+      saveSession();
+    }
+  }
+
+  // Tool Block Component
+  function createToolBlock(name, args) {
+    const block = document.createElement('div');
+    block.className = 'tool-block';
+    const argsStr = typeof args === 'object' ? JSON.stringify(args) : String(args);
+
+    block.innerHTML = `
+      <div class="tool-block-header" onclick="this.parentElement.classList.toggle('expanded')">
+        <div>
+          <span class="tool-title">● ${escapeHtml(name)}</span>
+          <span style="color:var(--muted);margin-left:6px;">(${escapeHtml(argsStr.slice(0, 45))})</span>
+          <span style="font-size:10px;color:var(--muted);margin-left:6px;">(ctrl+o to expand)</span>
+        </div>
+        <span class="tool-tag running">running</span>
+      </div>
+      <div class="tool-output">
+        <button class="copy-tool-btn" onclick="copyToolBlock(this)">Copy</button>
+        <pre><code></code></pre>
+      </div>
+    `;
+    terminalOutput.appendChild(block);
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    return block;
+  }
+
+  function updateToolBlock(block, status, output) {
+    if (!block) return;
+    const tag = block.querySelector('.tool-tag');
+    if (tag) { tag.className = 'tool-tag ' + status; tag.textContent = status; }
+    const code = block.querySelector('code');
+    if (code) code.textContent = output;
+  }
+
+  function appendToolOutput(block, chunk) {
+    if (!block) return;
+    const code = block.querySelector('code');
+    if (code) code.textContent += chunk;
+  }
+
+  window.copyToolBlock = function(btn) {
+    const code = btn.parentElement.querySelector('code');
+    if (code) {
+      navigator.clipboard.writeText(code.innerText).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 1500);
+      });
+    }
+  };
+
+  // Chat Component Functions
+  function appendChatUser(text) {
+    const row = document.createElement('div');
+    row.className = 'chat-row user';
+    row.innerHTML = `<div class="chat-user-bubble">> ${escapeHtml(text)}</div>`;
+    chatMessages.appendChild(row);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function appendChatAiPlaceholder() {
+    const row = document.createElement('div');
+    row.className = 'chat-row assistant';
+    row.innerHTML = `
+      <div class="chat-ai-box">
+        <div class="chat-ai-header">
+          <div class="chat-ai-avatar">G</div>
+          <span>GrapeRoot Antigravity</span>
+        </div>
+        <div class="chat-graph-slot"></div>
+        <div class="chat-ai-text">...</div>
+      </div>
+    `;
+    chatMessages.appendChild(row);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return row;
+  }
+
+  function renderChatGraphContext(rowEl, data) {
+    const slot = rowEl.querySelector('.chat-graph-slot');
+    if (!slot) return;
+    const files = Array.isArray(data.files) ? data.files : [];
+    slot.innerHTML = `
+      <div class="graph-context-chip">
+        🍇 Dual-Graph: <strong>${data.confidence.toUpperCase()}</strong> confidence · ${files.length} nodes pre-loaded
+      </div>
+    `;
+  }
+
+  function updateChatAiContent(rowEl, markdownText) {
+    const textEl = rowEl.querySelector('.chat-ai-text');
+    if (textEl) {
+      textEl.innerHTML = marked.parse(markdownText || '');
+      textEl.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+  }
+
+  // Graph Explorer Tab
+  async function loadGraphNodes(kind = 'all') {
+    const list = document.getElementById('nodeList');
+    list.innerHTML = '<div style="padding:10px;color:var(--muted);font-size:11.5px;">Loading graph nodes...</div>';
+    try {
+      const res = await fetch(`/api/graph/nodes?kind=${kind}&limit=40`);
+      const data = await res.json();
+      renderNodes(data.nodes || []);
+    } catch (e) {
+      list.innerHTML = '<div style="color:var(--red);font-size:11.5px;">Error loading nodes</div>';
+    }
+  }
+
+  function renderNodes(nodes) {
+    const list = document.getElementById('nodeList');
+    list.innerHTML = '';
+    if (!nodes || nodes.length === 0) {
+      list.innerHTML = '<div style="padding:10px;color:var(--muted);font-size:11.5px;">No matching nodes</div>';
+      return;
+    }
+    nodes.forEach(n => {
+      const card = document.createElement('div');
+      card.className = 'node-card';
+      const kws = (n.keywords || []).slice(0, 4).map(k => `<span class="kw-tag">${escapeHtml(k)}</span>`).join('');
+      card.innerHTML = `
+        <div class="node-card-top">
+          <span class="node-id">${escapeHtml(n.id || n.path)}</span>
+          <span class="node-kind-badge">${n.kind || 'node'}</span>
+        </div>
+        <div class="node-summary">${escapeHtml(n.summary || n.name || n.path)}</div>
+        ${kws ? `<div class="node-keywords">${kws}</div>` : ''}
+      `;
+      card.onclick = () => openCodeView(n.id || n.path);
+      list.appendChild(card);
+    });
+  }
+
+  async function runGraphSearch() {
+    const q = document.getElementById('graphSearchInput').value.trim();
+    if (!q) return loadGraphNodes();
+    const list = document.getElementById('nodeList');
+    list.innerHTML = '<div style="padding:10px;color:var(--muted);font-size:11.5px;">Querying graph_retrieve...</div>';
+    try {
+      const res = await fetch('/api/graph/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: q })
+      });
+      const data = await res.json();
+      const nodes = data.result?.nodes || data.result?.files || [];
+      const normalized = Array.isArray(nodes) ? nodes.map(item => typeof item === 'string' ? { id: item, path: item, summary: 'Matched node' } : item) : [];
+      renderNodes(normalized);
+    } catch (e) {
+      list.innerHTML = `<div style="color:var(--red);font-size:11.5px;">Search error: ${e.message}</div>`;
+    }
+  }
+
+  async function openCodeView(filePath) {
+    const drawer = document.getElementById('codeViewer');
+    const title = document.getElementById('codeViewerTitle');
+    const content = document.getElementById('codeViewerContent');
+    drawer.style.display = 'block';
+    title.textContent = filePath;
+    content.textContent = 'Calling graph_read...';
+
+    try {
+      const res = await fetch('/api/graph/read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file: filePath })
+      });
+      const data = await res.json();
+      content.textContent = data.result?.content || JSON.stringify(data.result, null, 2);
+      hljs.highlightElement(content);
+    } catch (e) {
+      content.textContent = 'Error: ' + e.message;
+    }
+  }
+
+  // Memory Tab
+  async function loadMemory() {
+    try {
+      const res = await fetch('/api/memory');
+      memoryData = await res.json();
+      renderMemory(memoryData);
+    } catch (e) {}
+  }
+
+  function renderMemory(list) {
+    const container = document.getElementById('memoryList');
+    container.innerHTML = '';
+    if (!list || list.length === 0) {
+      container.innerHTML = '<div style="padding:10px;color:var(--muted);font-size:11.5px;">No memories in context-store.json</div>';
+      return;
+    }
+    list.forEach(m => {
+      const card = document.createElement('div');
+      card.className = 'memory-card';
+      card.innerHTML = `
+        <div class="mem-header">
+          <span class="mem-type-badge ${m.type || 'fact'}">${m.type || 'fact'}</span>
+          <span class="mem-date">${m.date || 'today'}</span>
+        </div>
+        <div class="mem-content">${escapeHtml(m.content)}</div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function filterMemory(type, btn) {
+    document.querySelectorAll('.mem-filter-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    if (type === 'all') {
+      renderMemory(memoryData);
+    } else {
+      renderMemory(memoryData.filter(m => m.type === type));
+    }
+  }
+
+  async function promptAddMemory() {
+    const text = prompt('Enter memory content (max 15 words):');
+    if (!text) return;
+    const type = prompt('Enter type (decision | task | next | fact | blocker):', 'fact') || 'fact';
+    await fetch('/api/memory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, content: text })
+    });
+    loadMemory();
+  }
+
+  // Stats / Tool Calls Tab
+  async function loadToolCalls() {
+    try {
+      const res = await fetch('/api/tool-calls');
+      const calls = await res.json();
+      const container = document.getElementById('toolCallsList');
+      container.innerHTML = '';
+      if (!calls || calls.length === 0) {
+        container.innerHTML = '<div style="color:var(--muted);font-size:11px;">No tool calls logged yet</div>';
+        return;
+      }
+      calls.slice(0, 25).forEach(c => {
+        const row = document.createElement('div');
+        row.className = 'log-row';
+        row.innerHTML = `
+          <span class="log-tool">● ${escapeHtml(c.tool || 'tool')}</span>
+          <span class="log-time">${new Date(c.timestamp || Date.now()).toLocaleTimeString()}</span>
+        `;
+        container.appendChild(row);
+      });
+    } catch (e) {}
+  }
+
+  // Session Manager
+  function startNewSession() {
+    currentSessionId = 'session_' + Date.now();
+    terminalOutput.innerHTML = '';
+    chatMessages.innerHTML = '';
+    printDiamondBanner();
+    loadSessions();
+  }
+
+  async function loadSessions() {
+    try {
+      const res = await fetch('/api/sessions');
+      sessions = await res.json();
+      renderSessionList();
+    } catch (e) {}
+  }
+
+  function renderSessionList() {
+    sessionList.innerHTML = '';
+    if (!sessions || sessions.length === 0) {
+      sessionList.innerHTML = '<div style="padding:10px;font-size:11.5px;color:var(--muted);">No past sessions</div>';
+      return;
+    }
+    sessions.forEach(s => {
+      const div = document.createElement('div');
+      div.className = 'session-item' + (s.id === currentSessionId ? ' active' : '');
+      div.innerHTML = `<span class="session-title">${escapeHtml(s.title || 'Session')}</span>`;
+      div.onclick = () => { currentSessionId = s.id; renderSessionList(); };
+      sessionList.appendChild(div);
+    });
+  }
+
+  async function saveSession() {
+    if (!currentSessionId) currentSessionId = 'session_' + Date.now();
+    try {
+      await fetch('/api/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: currentSessionId,
+          title: commandHistory[0] || 'GrapeRoot Session'
+        })
+      });
+      loadSessions();
+    } catch (e) {}
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+</script>
+</body>
+</html>
